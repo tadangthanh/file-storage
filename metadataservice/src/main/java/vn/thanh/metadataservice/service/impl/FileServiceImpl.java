@@ -36,6 +36,7 @@ public class FileServiceImpl implements IFileService {
     private final FileRepo fileRepo;
     private final FileMapper fileMapper;
     private final CategoryRepo categoryRepo;
+    private final CategoryValidation categoryValidation;
 
     @Override
     public List<FileResponse> uploadFile(List<MultipartFile> files) {
@@ -49,6 +50,7 @@ public class FileServiceImpl implements IFileService {
     @Override
     public List<FileResponse> uploadFileCategory(Long categoryId, List<MultipartFile> files) {
         log.info("upload file with category id {}", categoryId);
+        categoryValidation.validIsOwnerCategory(categoryId,AuthUtils.getUserId());
         List<File> documents = metadataStorageService.saveFilesCategory(files, categoryId);
         // send file to storage service
         return fileMapper.toResponse(documents);
