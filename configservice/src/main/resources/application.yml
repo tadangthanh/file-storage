@@ -1,0 +1,14 @@
+server:
+  port: 8888
+spring:
+  profiles:
+    active: native # neu k set la navtive se dung GIT
+  cloud:
+    config:
+      server:
+        native:
+          search-locations: classpath:/shared
+  security:
+    user:
+      name: root
+      password: 123456

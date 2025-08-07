@@ -1,0 +1,12 @@
+spring:
+  config:
+    import: configserver:${CONFIGSERVER_URL:http://localhost:8888}
+  cloud:
+    config:
+      fail-fast: true
+      username: root
+      password: 123456
+eureka:
+  client:
+    register-with-eureka: false
+    fetch-registry: false
