@@ -1,0 +1,8 @@
+spring:
+  config:
+    import: configserver:http://localhost:8888
+  cloud:
+    config:
+      fail-fast: true # nếu không thể kết nối đến config server thì ứng dụng sẽ dừng lại
+      username: root
+      password: 123456
