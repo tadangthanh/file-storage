@@ -25,7 +25,7 @@ public class FileRest {
     @PostMapping
     public ResponseData<List<FileResponse>> uploadFileEmptyCategory(@ValidFiles @RequestPart("files") MultipartFile[] files) {
         List<FileResponse> result = fileService.uploadFile(List.of(files));
-        return new ResponseData<>(201, "Tải lên thành công ", result);
+        return new ResponseData<>(201, "Tải lên thành công", result);
     }
 
     @PostMapping("/category/{categoryId}")
