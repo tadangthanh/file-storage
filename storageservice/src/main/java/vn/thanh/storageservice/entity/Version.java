@@ -6,12 +6,12 @@ import lombok.Getter;
 import lombok.Setter;
 
 @Entity
-@Table(name = "files_version")
+@Table(name = "versions")
 @Getter
 @Setter
-public class FileVersion extends BaseEntity {
-    private Long fileId;
-    private Integer version;
+public class Version extends BaseEntity {
+    private Long metadataId;
+    private Integer versionNumber;
     private String blobName;
     private Long size;
 }

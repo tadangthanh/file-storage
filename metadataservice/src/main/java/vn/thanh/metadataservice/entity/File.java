@@ -23,4 +23,5 @@ public class File extends BaseEntity {
     @ManyToOne
     @JoinColumn(name = "category_id")
     private Category category;
+    private Long currentVersionId;
 }
