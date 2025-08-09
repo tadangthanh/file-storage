@@ -8,6 +8,19 @@ server:
       charset: UTF-8
       force: true
 spring:
+  security:
+    oauth2:
+      client:
+        registration:
+          metadata-service:
+            authorization-grant-type: client_credentials
+            client-id: storage-service
+            client-secret: ${storage-service-client-secret}
+            scope: get
+            provider: springkeycloak
+        provider:
+          springkeycloak:
+            issuer-uri: ${KEYCLOAK_ISSUER_URI:http://localhost:9000/realms/documentstorage}
   #data source
   datasource:
     url: jdbc:mysql://${MYSQL_HOST:localhost}:${MYSQL_PORT:3306}/storageservice?createDatabaseIfNotExist=true&useUnicode=yes&characterEncoding=UTF-8&useSSL=false&allowPublicKeyRetrieval=true
@@ -39,3 +52,20 @@ azure:
   blob-storage:
     connection-string: ${azurestorageconnectionstring}
     account-name: ${AZURE_STORAGE_CONTAINER_NAME:tathanhmycv}
+
+resilience4j:
+  circuitbreaker:
+    instances:
+      metadataService:
+        register-health-indicator: true
+        sliding-window-type: COUNT_BASED
+        sliding-window-size: 10           # Xét trên 10 request gần nhất
+        failure-rate-threshold: 50        # Nếu 50% request fail -> mở circuit
+        wait-duration-in-open-state: 5s   # Thời gian chờ trước khi thử lại (half-open)
+        permitted-number-of-calls-in-half-open-state: 3
+        automatic-transition-from-open-to-half-open-enabled: true
+        minimum-number-of-calls: 5        # Cần tối thiểu 5 request trước khi tính tỷ lệ fail
+  timelimiter:
+    instances:
+      metadataService:
+        timeout-duration: 2s              # Timeout cho mỗi request

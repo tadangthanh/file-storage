@@ -280,9 +280,7 @@ public class AzureStorageServiceImpl implements IAzureStorageService {
         OffsetDateTime expiryTime = OffsetDateTime.now().plusMinutes(15);
 
         BlobServiceSasSignatureValues values = new BlobServiceSasSignatureValues(expiryTime, permission)
-                .setStartTime(OffsetDateTime.now().minusMinutes(1))
-                .setContentDisposition("attachment")
-                .setContentType("application/pdf");
+                .setStartTime(OffsetDateTime.now().minusMinutes(1));
 
         String sasToken = blobClient.generateSas(values);
 //Có thể dùng Azure Event Grid để nhận thông báo "blob created"

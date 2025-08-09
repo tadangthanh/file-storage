@@ -9,6 +9,7 @@ import java.util.List;
 public interface IFileService {
     List<FileResponse> uploadFile(List<MultipartFile> files);
 
+
     List<FileResponse> uploadFileCategory(Long categoryId, List<MultipartFile> files);
 
     void softDeleteFileById(Long fileId); // xoa tam file

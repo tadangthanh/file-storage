@@ -1,0 +1,35 @@
+package vn.thanh.storageservice.service.impl;
+
+import jakarta.transaction.Transactional;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
+import vn.thanh.storageservice.client.MetadataService;
+import vn.thanh.storageservice.dto.VersionInitRequest;
+import vn.thanh.storageservice.entity.Version;
+import vn.thanh.storageservice.entity.VersionStatus;
+import vn.thanh.storageservice.repository.VersionRepo;
+import vn.thanh.storageservice.service.IAzureStorageService;
+import vn.thanh.storageservice.service.IVersionService;
+
+@RequiredArgsConstructor
+@Service
+@Transactional
+@Slf4j(topic = "VERSION_SERVICE")
+public class VersionServiceImpl implements IVersionService {
+    private final VersionRepo versionRepo;
+    private final IAzureStorageService azureStorageService;
+    private final MetadataService metadataService;
+
+    @Override
+    public String initVersion(VersionInitRequest versionInitRequest) {
+        log.info("init version: metadata id: {}", versionInitRequest.getMetadataId());
+        metadataService.getFileById(versionInitRequest.getMetadataId());
+        Version version = new Version();
+        version.setStatus(VersionStatus.UPLOADING);
+        version.setMetadataId(versionInitRequest.getMetadataId());
+        version.setVersionNumber(1);
+        versionRepo.save(version);
+        return azureStorageService.presignUrlUpload(versionInitRequest.getMetadataId() + "/" + version.getId() +"/"+ versionInitRequest.getOriginalFilename());
+    }
+}
