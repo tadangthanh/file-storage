@@ -21,5 +21,6 @@ public interface IAzureStorageService {
     File downloadToFile(String blobName, String tempDirPath);
 
     String getBlobUrl(String blobName); // Lấy url của blob
+    String presignUrlUpload(String blobName);
 
 }

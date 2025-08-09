@@ -3,6 +3,7 @@ package vn.thanh.storageservice.service.impl;
 import com.azure.storage.blob.BlobClient;
 import com.azure.storage.blob.BlobContainerClient;
 import com.azure.storage.blob.BlobServiceClient;
+import com.azure.storage.blob.BlobServiceClientBuilder;
 import com.azure.storage.blob.models.BlobStorageException;
 import com.azure.storage.blob.sas.BlobSasPermission;
 import com.azure.storage.blob.sas.BlobServiceSasSignatureValues;
@@ -260,6 +261,30 @@ public class AzureStorageServiceImpl implements IAzureStorageService {
             log.error("Lỗi khi lấy URL của blob: {}", e.getMessage());
             throw new CustomBlobStorageException("Không thể lấy URL của blob: " + e.getMessage());
         }
+    }
+
+    @Override
+    public String presignUrlUpload(String blobName) {
+
+        BlobContainerClient containerClient = blobServiceClient.getBlobContainerClient(containerNameDefault);
+
+        BlobClient blobClient = containerClient.getBlobClient(blobName);
+
+// Cấu hình quyền ghi (upload)
+        BlobSasPermission permission = new BlobSasPermission()
+                .setWritePermission(true)
+                .setCreatePermission(true); // cần thiết để tạo blob
+
+        OffsetDateTime expiryTime = OffsetDateTime.now().plusMinutes(15);
+
+        BlobServiceSasSignatureValues values = new BlobServiceSasSignatureValues(expiryTime, permission)
+                .setStartTime(OffsetDateTime.now().minusMinutes(1))
+                .setContentDisposition("attachment")
+                .setContentType("application/pdf");
+
+        String sasToken = blobClient.generateSas(values);
+
+        return blobClient.getBlobUrl() + "?" + sasToken;
     }
 
 
