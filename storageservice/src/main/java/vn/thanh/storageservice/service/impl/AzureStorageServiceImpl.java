@@ -263,6 +263,7 @@ public class AzureStorageServiceImpl implements IAzureStorageService {
         }
     }
 
+
     @Override
     public String presignUrlUpload(String blobName) {
 
@@ -273,6 +274,7 @@ public class AzureStorageServiceImpl implements IAzureStorageService {
 // Cấu hình quyền ghi (upload)
         BlobSasPermission permission = new BlobSasPermission()
                 .setWritePermission(true)
+                //Muốn hạn chế upload overwrite thì ko cần write
                 .setCreatePermission(true); // cần thiết để tạo blob
 
         OffsetDateTime expiryTime = OffsetDateTime.now().plusMinutes(15);
@@ -283,8 +285,14 @@ public class AzureStorageServiceImpl implements IAzureStorageService {
                 .setContentType("application/pdf");
 
         String sasToken = blobClient.generateSas(values);
-
+//Có thể dùng Azure Event Grid để nhận thông báo "blob created"
         return blobClient.getBlobUrl() + "?" + sasToken;
+        //clien upload truc tiep bang http put:
+//        curl --location --request PUT 'url trả về ' \
+//--header 'x-ms-blob-type: BlockBlob' \
+//--header 'Content-Type: text/plain' \
+//--data-binary '@/home/thanh/Projects/microservice_jmaster/keycloak.txt'
+
     }
 
 

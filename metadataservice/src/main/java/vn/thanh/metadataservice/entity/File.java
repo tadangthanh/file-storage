@@ -15,7 +15,7 @@ public class File extends BaseEntity {
     private String type;
     private Long size;
     private String name;
-    @Column(name = "owner_id")
+    @Column(name = "owner_id",nullable = false)
     private UUID ownerId;
     private LocalDateTime deletedAt;
     @Column(name = "permanent_delete_at")
