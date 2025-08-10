@@ -143,6 +143,12 @@
 			<artifactId>spring-cloud-azure-starter-keyvault-secrets</artifactId>
 			<version>5.7.0</version>
 		</dependency>
+		<!-- https://mvnrepository.com/artifact/org.apache.tika/tika-core -->
+		<dependency>
+			<groupId>org.apache.tika</groupId>
+			<artifactId>tika-core</artifactId>
+			<version>3.2.2</version>
+		</dependency>
 	</dependencies>
 	<dependencyManagement>
 		<dependencies>

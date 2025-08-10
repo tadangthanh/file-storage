@@ -265,7 +265,7 @@ public class AzureStorageServiceImpl implements IAzureStorageService {
 
 
     @Override
-    public String presignUrlUpload(String blobName) {
+    public String getUrlUpload(String blobName) {
 
         BlobContainerClient containerClient = blobServiceClient.getBlobContainerClient(containerNameDefault);
 

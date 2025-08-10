@@ -30,6 +30,6 @@ public class VersionServiceImpl implements IVersionService {
         version.setMetadataId(versionInitRequest.getMetadataId());
         version.setVersionNumber(1);
         versionRepo.save(version);
-        return azureStorageService.presignUrlUpload(versionInitRequest.getMetadataId() + "/" + version.getId() +"/"+ versionInitRequest.getOriginalFilename());
+        return azureStorageService.getUrlUpload(versionInitRequest.getMetadataId() + "/" + version.getId() + "/" + versionInitRequest.getOriginalFilename());
     }
 }
