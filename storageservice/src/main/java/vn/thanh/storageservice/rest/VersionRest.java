@@ -25,7 +25,7 @@ import java.nio.charset.StandardCharsets;
 public class VersionRest {
     private final IVersionService versionService;
     private final IAzureStorageService azureStorageService;
-    @PostMapping("/init")
+    @PostMapping("/presign-url")
     ResponseData<String> initVersion(@RequestBody VersionInitRequest versionInitRequest){
         return new ResponseData<>(200,"ok", versionService.initVersion(versionInitRequest));
     }

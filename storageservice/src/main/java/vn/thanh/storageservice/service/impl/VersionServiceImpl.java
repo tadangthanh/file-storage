@@ -28,11 +28,20 @@ public class VersionServiceImpl implements IVersionService {
     @Override
     public String initVersion(VersionInitRequest versionInitRequest) {
         log.info("init version: metadata id: {}", versionInitRequest.getMetadataId());
+        // kiem tra su ton tai cua metadata file ben metadata service
         metadataService.getFileById(versionInitRequest.getMetadataId());
+        // kiem tra xem da ton tai phien ban cho metadata nay chua
+        Version versionExists = versionRepo.findFirstByMetadataIdOrderByVersionNumberDesc(versionInitRequest.getMetadataId()).orElse(null);
         Version version = new Version();
-        version.setStatus(VersionStatus.UPLOADING);
+        //neu ton tai thi tao version moi bang cach tang version
+        if (versionExists!= null) {
+            int currentVersion = versionExists.getVersionNumber();
+            version.setVersionNumber(currentVersion + 1);
+        } else {
+            version.setVersionNumber(1);
+        }
         version.setMetadataId(versionInitRequest.getMetadataId());
-        version.setVersionNumber(1);
+        version.setStatus(VersionStatus.UPLOADING);
         versionRepo.save(version);
         return azureStorageService.getUrlUpload(versionInitRequest.getMetadataId() + "/" + version.getId() + "/" + versionInitRequest.getOriginalFilename());
     }
@@ -40,12 +49,18 @@ public class VersionServiceImpl implements IVersionService {
     @Override
     public void completeUpload(Long versionId, VersionDto versionDto) {
         log.info("update version by id: {}", versionId);
-        Version versionExists = versionRepo.findById(versionId).orElseThrow(() -> {
-            log.info("version not found by id: {}", versionId);
-            return new ResourceAlreadyExistsException("Không tìm thấy phiên bản này");
-        });
+        Version versionExists = getVersionOrThrow(versionId);
         versionMapper.updateVersionIgnoreVNumber(versionExists, versionDto);
         versionExists.setStatus(VersionStatus.AVAILABLE);
         versionRepo.save(versionExists);
+    }
+
+
+    @Override
+    public Version getVersionOrThrow(Long versionId) {
+        return versionRepo.findById(versionId).orElseThrow(() -> {
+            log.info("version not found by id: {}", versionId);
+            return new ResourceAlreadyExistsException("Không tìm thấy phiên bản này");
+        });
     }
 }
