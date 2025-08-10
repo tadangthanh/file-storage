@@ -56,6 +56,13 @@ public class FileServiceImpl implements IFileService {
         return fileMapper.toResponse(documents);
     }
 
+    @Override
+    public FileResponse initMetadata(MetadataRequest metadataRequest) {
+        log.info("init metadata");
+        File file = metadataStorageService.initMetadata(metadataRequest);
+        return fileMapper.toResponse(file);
+    }
+
 
     @Override
     public void softDeleteFileById(Long fileId) {

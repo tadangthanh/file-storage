@@ -68,9 +68,15 @@ public class FileRest {
     public ResponseData<OnlyOfficeConfig> getOnlyOfficeConfig(@PathVariable Long fileId) {
         return new ResponseData<>(200, "Thành công", fileService.getOnlyOfficeConfig(fileId));
     }
+
     @GetMapping("/search")
     public ResponseData<PageResponse<List<FileResponse>>> search(Pageable pageable, @RequestParam(required = false, value = "files") String[] files) {
         return new ResponseData<>(200, "thành công", fileService.getPage(pageable, files));
+    }
+
+    @PostMapping("/init")
+    public ResponseData<FileResponse> initFile(@RequestBody MetadataRequest metadataRequest) {
+        return new ResponseData<>(201, "Tải lên thành công", fileService.initMetadata(metadataRequest));
     }
 
 }

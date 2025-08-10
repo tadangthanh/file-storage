@@ -2,6 +2,7 @@ package vn.thanh.metadataservice.service;
 
 
 import org.springframework.web.multipart.MultipartFile;
+import vn.thanh.metadataservice.dto.MetadataRequest;
 import vn.thanh.metadataservice.entity.File;
 
 import java.util.List;
@@ -12,6 +13,7 @@ public interface IMetadataStorageService {
 
     List<File> saveFilesCategory(List<MultipartFile> files, Long categoryId);
 
+    File initMetadata(MetadataRequest metadataRequest);
 
     List<File> saveFiles(List<MultipartFile> files);
 

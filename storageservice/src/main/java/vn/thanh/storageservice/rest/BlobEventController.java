@@ -1,6 +1,7 @@
 package vn.thanh.storageservice.rest;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -19,8 +20,10 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/blob-events")
 @RequiredArgsConstructor
+@Slf4j
 public class BlobEventController {
     private final IKafkaService kafkaService;
+
     @PostMapping
     public ResponseEntity<Map<String, String>> handleEvents(@RequestBody List<Map<String, Object>> events) throws URISyntaxException {
         if (events != null && !events.isEmpty()) {
@@ -45,29 +48,22 @@ public class BlobEventController {
                 URI uri = new URI(url);
                 String path = uri.getPath(); // /luu-tru-tai-lieu/4/1/queryElasticsearch.txt
                 String[] parts = path.split("/");
-// parts[0] = "" (do bắt đầu bằng /)
-// parts[1] = luu-tru-tai-lieu
-// parts[2] = 4  (metadataId)
-// parts[3] = 1  (versionId)
-// parts[4] = queryElasticsearch.txt
-                System.out.println("metadata id"+parts[2]);
-                System.out.println("versionId "+parts[3]);
-                System.out.println("original name: "+parts[4]);
-                String contentType=data.get("contentType").toString();
+                Long metadataId = Long.parseLong(parts[2]);
+                Long currentVersionId = Long.parseLong(parts[3]);
+                String originalFileName = parts[4];
+                String contentType = data.get("contentType").toString();
                 Number contentLengthNum = (Number) data.get("contentLength");
                 String blobName = String.join("/", Arrays.copyOfRange(parts, 2, parts.length));
-                System.out.println("blobName: "+blobName);
                 long size = contentLengthNum.longValue();
-                System.out.println("contentType: "+contentType);
-                System.out.println("Size: " + size);
                 MetadataUpdate metadataUpdate = new MetadataUpdate();
-                metadataUpdate.setId(Long.parseLong(parts[2]));
-                metadataUpdate.setName(parts[4]);
+                metadataUpdate.setId(metadataId);
+                metadataUpdate.setName(originalFileName);
                 metadataUpdate.setType(contentType);
                 metadataUpdate.setSize(size);
-                metadataUpdate.setCurrentVersionId(Long.parseLong(parts[3]));
+                metadataUpdate.setCurrentVersionId(currentVersionId);
                 kafkaService.eventUpdateMetadata(metadataUpdate);
-            // TODO: Xử lý logic khi file được upload xong
+                log.info("Blob created event: metadata id: {}, version id: {}, originalFileName: {}, contentType: {}, size: {}, blobName: {}", parts[2], parts[3], parts[4], contentType, size, blobName);
+                // TODO: Xử lý logic khi file được upload xong
             }
         }
         return ResponseEntity.ok().build();
