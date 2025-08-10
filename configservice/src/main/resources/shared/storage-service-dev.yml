@@ -48,6 +48,21 @@ spring:
                   max-retries: 4
                   base-delay: PT0.0801S
                   max-delay: PT9S
+  kafka:
+    bootstrap-servers: localhost:9092,localhost:9093,localhost:9094 #địa chỉ Kafka broker.
+    producer:
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      #0: khi để 0, service này gửi event lên kafka server, thì nó sẽ k quan tâm event có lưu THÀNH CÔNG vào kafka server hay k mà xác minh luôn đã gửi thành công
+      #1: lưu thành công vào leader nhưng k đợi lưu vào follower, trường hợp vừa lưu vào leader thì leader sập sẽ bị mất event
+      #-1: event phải lưu thành công vào leader và follower
+      acks: -1
+      retries: 1 # số lần gửi lại khi acks bị fail
+      properties:
+        enable.idempotence: true # Tránh gửi trùng message khi retry
+        max.in.flight.request.per.connection: 5 #số lượng request trên 1 connection <=5 mới chống gửi trùng
+
+
 azure:
   blob-storage:
     connection-string: ${azurestorageconnectionstring}
