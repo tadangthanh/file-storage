@@ -8,7 +8,9 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import vn.thanh.storageservice.dto.MetadataUpdate;
+import vn.thanh.storageservice.dto.VersionDto;
 import vn.thanh.storageservice.service.IKafkaService;
+import vn.thanh.storageservice.service.IVersionService;
 
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -23,6 +25,7 @@ import java.util.Map;
 @Slf4j
 public class BlobEventController {
     private final IKafkaService kafkaService;
+    private final IVersionService versionService;
 
     @PostMapping
     public ResponseEntity<Map<String, String>> handleEvents(@RequestBody List<Map<String, Object>> events) throws URISyntaxException {
@@ -55,12 +58,21 @@ public class BlobEventController {
                 Number contentLengthNum = (Number) data.get("contentLength");
                 String blobName = String.join("/", Arrays.copyOfRange(parts, 2, parts.length));
                 long size = contentLengthNum.longValue();
+
                 MetadataUpdate metadataUpdate = new MetadataUpdate();
                 metadataUpdate.setId(metadataId);
                 metadataUpdate.setName(originalFileName);
                 metadataUpdate.setType(contentType);
                 metadataUpdate.setSize(size);
                 metadataUpdate.setCurrentVersionId(currentVersionId);
+
+                VersionDto versionDto = new VersionDto();
+                versionDto.setSize(size);
+                versionDto.setId(currentVersionId);
+                versionDto.setBlobName(blobName);
+                versionDto.setMetadataId(metadataId);
+                // update version when upload successful
+                versionService.completeUpload(currentVersionId, versionDto);
                 kafkaService.eventUpdateMetadata(metadataUpdate);
                 log.info("Blob created event: metadata id: {}, version id: {}, originalFileName: {}, contentType: {}, size: {}, blobName: {}", parts[2], parts[3], parts[4], contentType, size, blobName);
                 // TODO: Xử lý logic khi file được upload xong
