@@ -6,6 +6,8 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import vn.thanh.storageservice.dto.MetadataUpdate;
+import vn.thanh.storageservice.service.IKafkaService;
 
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -18,6 +20,7 @@ import java.util.Map;
 @RequestMapping("/api/blob-events")
 @RequiredArgsConstructor
 public class BlobEventController {
+    private final IKafkaService kafkaService;
     @PostMapping
     public ResponseEntity<Map<String, String>> handleEvents(@RequestBody List<Map<String, Object>> events) throws URISyntaxException {
         if (events != null && !events.isEmpty()) {
@@ -57,7 +60,14 @@ public class BlobEventController {
                 long size = contentLengthNum.longValue();
                 System.out.println("contentType: "+contentType);
                 System.out.println("Size: " + size);
-                // TODO: Xử lý logic khi file được upload xong
+                MetadataUpdate metadataUpdate = new MetadataUpdate();
+                metadataUpdate.setId(Long.parseLong(parts[2]));
+                metadataUpdate.setName(parts[4]);
+                metadataUpdate.setType(contentType);
+                metadataUpdate.setSize(size);
+                metadataUpdate.setCurrentVersionId(Long.parseLong(parts[3]));
+                kafkaService.eventUpdateMetadata(metadataUpdate);
+            // TODO: Xử lý logic khi file được upload xong
             }
         }
         return ResponseEntity.ok().build();

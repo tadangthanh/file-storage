@@ -51,8 +51,8 @@ spring:
   kafka:
     bootstrap-servers: localhost:9092,localhost:9093,localhost:9094 #địa chỉ Kafka broker.
     producer:
-      value-serializer: org.apache.kafka.common.serialization.StringSerializer
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
       #0: khi để 0, service này gửi event lên kafka server, thì nó sẽ k quan tâm event có lưu THÀNH CÔNG vào kafka server hay k mà xác minh luôn đã gửi thành công
       #1: lưu thành công vào leader nhưng k đợi lưu vào follower, trường hợp vừa lưu vào leader thì leader sập sẽ bị mất event
       #-1: event phải lưu thành công vào leader và follower

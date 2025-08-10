@@ -3,8 +3,10 @@ package vn.thanh.metadataservice.service.impl;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
+import vn.thanh.metadataservice.dto.MetadataUpdate;
 import vn.thanh.metadataservice.entity.Category;
 import vn.thanh.metadataservice.entity.File;
 import vn.thanh.metadataservice.exception.ResourceNotFoundException;
@@ -130,4 +132,11 @@ public class MetadataStorageServiceImpl implements IMetadataStorageService {
         }
         fileRepo.saveAll(files);
     }
+
+    // Lắng nghe topic "my-topic" với groupId "my-consumer-group"
+    @KafkaListener(topics = "metadata", groupId = "metadata-group")
+    public void listenUpdateMetadata(MetadataUpdate metadataUpdate) {
+        System.out.println("Nhận message: " + metadataUpdate.toString());
+    }
+
 }
