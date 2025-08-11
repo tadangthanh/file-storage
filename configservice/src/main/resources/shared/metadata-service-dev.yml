@@ -12,3 +12,17 @@ spring:
       ddl-auto: update
     generate-ddl: false
     database-platform: org.hibernate.dialect.MySQL8Dialect
+  kafka:
+    bootstrap-servers: localhost:9092,localhost:9093,localhost:9094
+    consumer:
+      group-id: metadata-group   # Tên nhóm consumer
+      auto-offset-reset: earliest   # earliest = đọc từ đầu nếu chưa có offset, latest = đọc mới nhất
+      enable-auto-commit: false     # false = tự xử lý commit offset
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.ByteArrayDeserializer
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+      max-poll-records: 500         # Số lượng record tối đa mỗi lần poll
+    listener:
+      ack-mode: manual              # Nếu enable-auto-commit=false thì thường dùng manual
+      concurrency: 3                # Số thread xử lý song song

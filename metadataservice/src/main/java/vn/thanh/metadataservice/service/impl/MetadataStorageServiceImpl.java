@@ -3,11 +3,17 @@ package vn.thanh.metadataservice.service.impl;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.hibernate.boot.Metadata;
+import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
+import vn.thanh.metadataservice.dto.MetadataRequest;
+import vn.thanh.metadataservice.dto.MetadataUpdate;
 import vn.thanh.metadataservice.entity.Category;
 import vn.thanh.metadataservice.entity.File;
+import vn.thanh.metadataservice.exception.BadRequestException;
 import vn.thanh.metadataservice.exception.ResourceNotFoundException;
+import vn.thanh.metadataservice.mapper.FileMapper;
 import vn.thanh.metadataservice.repository.CategoryRepo;
 import vn.thanh.metadataservice.repository.FileRepo;
 import vn.thanh.metadataservice.service.IMetadataMapper;
@@ -27,6 +33,7 @@ public class MetadataStorageServiceImpl implements IMetadataStorageService {
     private final FileRepo fileRepo;
     private final CategoryRepo categoryRepo;
     private final CategoryValidation categoryValidation;
+    private final FileMapper fileMapper;
 //    @Value("${app.delete.document-retention-days}")
 //    private int documentRetentionDays;
 
@@ -91,6 +98,24 @@ public class MetadataStorageServiceImpl implements IMetadataStorageService {
     }
 
     @Override
+    public File initMetadata(MetadataRequest metadataRequest) {
+        log.info("init metadata ");
+        File file = fileMapper.toFile(metadataRequest);
+        file.setOwnerId(AuthUtils.getUserId());
+        file = fileRepo.save(file);
+        if (metadataRequest.getCategoryId() == null) {
+            return file;
+        }
+        Category category = categoryRepo.findById(metadataRequest.getCategoryId()).orElseThrow(() -> {
+            log.info("category id: {} not found", metadataRequest.getCategoryId());
+            return new ResourceNotFoundException("category not found");
+        });
+        file.setCategory(category);
+        file = fileRepo.save(file);
+        return file;
+    }
+
+    @Override
     public List<File> saveFiles(List<MultipartFile> files) {
         log.info("Save list file, list size: {}", files.size());
         // Lưu tài liệu vào cơ sở dữ liệu
@@ -130,4 +155,17 @@ public class MetadataStorageServiceImpl implements IMetadataStorageService {
         }
         fileRepo.saveAll(files);
     }
+
+    // Lắng nghe topic "my-topic" với groupId "my-consumer-group"
+    @KafkaListener(topics = "metadata", groupId = "metadata-group")
+    public void listenUpdateMetadata(MetadataUpdate metadataUpdate) {
+        log.info("received metadata update: {}", metadataUpdate.toString());
+        if (metadataUpdate.getId() == null) {
+            throw new BadRequestException("Lỗi tải file lên");
+        }
+        File fileExist = getFileByIdOrThrow(metadataUpdate.getId());
+        fileMapper.updateMetadata(fileExist, metadataUpdate);
+        fileRepo.save(fileExist);
+    }
+
 }

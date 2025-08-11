@@ -5,6 +5,8 @@ import org.mapstruct.Mapping;
 import org.mapstruct.MappingTarget;
 import vn.thanh.metadataservice.dto.FileRequest;
 import vn.thanh.metadataservice.dto.FileResponse;
+import vn.thanh.metadataservice.dto.MetadataRequest;
+import vn.thanh.metadataservice.dto.MetadataUpdate;
 import vn.thanh.metadataservice.entity.File;
 
 import java.util.List;
@@ -17,9 +19,12 @@ public interface FileMapper {
 
     void updateFile(@MappingTarget File file, FileRequest fileRequest);
 
-    @Mapping(target = "id",ignore = true)
+    @Mapping(target = "id", ignore = true)
     void copyFile(@MappingTarget File fileDes, File file);
 
+    void updateMetadata(@MappingTarget File file, MetadataUpdate metadataUpdate);
+
+    File toFile(MetadataRequest metadataRequest);
 
     List<FileResponse> toResponse(List<File> files);
 }

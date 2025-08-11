@@ -11,6 +11,7 @@ import org.springframework.web.multipart.MultipartFile;
 import vn.thanh.metadataservice.dto.*;
 import vn.thanh.metadataservice.entity.Category;
 import vn.thanh.metadataservice.entity.File;
+import vn.thanh.metadataservice.exception.AccessDeniedException;
 import vn.thanh.metadataservice.exception.ResourceNotFoundException;
 import vn.thanh.metadataservice.mapper.FileMapper;
 import vn.thanh.metadataservice.repository.CategoryRepo;
@@ -54,6 +55,13 @@ public class FileServiceImpl implements IFileService {
         List<File> documents = metadataStorageService.saveFilesCategory(files, categoryId);
         // send file to storage service
         return fileMapper.toResponse(documents);
+    }
+
+    @Override
+    public FileResponse initMetadata(MetadataRequest metadataRequest) {
+        log.info("init metadata");
+        File file = metadataStorageService.initMetadata(metadataRequest);
+        return fileMapper.toResponse(file);
     }
 
 
@@ -173,5 +181,17 @@ public class FileServiceImpl implements IFileService {
             return PaginationUtils.convertToPageResponse(pageAccessByResource, pageable, fileMapper::toResponse);
         }
         return PaginationUtils.convertToPageResponse(fileRepo.findAll(spec, pageable), pageable, fileMapper::toResponse);
+    }
+
+    @Override
+    public void validateOwnerOfAllFile(UUID userId, List<Long> filesId) {
+        long count = fileRepo.countFilesByIds(filesId);
+        if (count != filesId.size()) {
+            throw new ResourceNotFoundException("Có file không tồn tại");
+        }
+        boolean isOwnerAll = fileRepo.isOwnerOfAll(filesId, userId);
+        if (!isOwnerAll) {
+            throw new AccessDeniedException("Bạn không có quyền tải lên file này");
+        }
     }
 }

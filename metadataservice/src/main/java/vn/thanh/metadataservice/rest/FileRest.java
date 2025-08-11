@@ -12,6 +12,7 @@ import vn.thanh.metadataservice.service.IFileService;
 import vn.thanh.metadataservice.validation.ValidFiles;
 
 import java.util.List;
+import java.util.UUID;
 
 
 @RequiredArgsConstructor
@@ -25,7 +26,7 @@ public class FileRest {
     @PostMapping
     public ResponseData<List<FileResponse>> uploadFileEmptyCategory(@ValidFiles @RequestPart("files") MultipartFile[] files) {
         List<FileResponse> result = fileService.uploadFile(List.of(files));
-        return new ResponseData<>(201, "Tải lên thành công ", result);
+        return new ResponseData<>(201, "Tải lên thành công", result);
     }
 
     @PostMapping("/category/{categoryId}")
@@ -68,9 +69,22 @@ public class FileRest {
     public ResponseData<OnlyOfficeConfig> getOnlyOfficeConfig(@PathVariable Long fileId) {
         return new ResponseData<>(200, "Thành công", fileService.getOnlyOfficeConfig(fileId));
     }
+
     @GetMapping("/search")
     public ResponseData<PageResponse<List<FileResponse>>> search(Pageable pageable, @RequestParam(required = false, value = "files") String[] files) {
         return new ResponseData<>(200, "thành công", fileService.getPage(pageable, files));
     }
 
+    @PostMapping("/init")
+    public ResponseData<FileResponse> initFile(@RequestBody MetadataRequest metadataRequest) {
+        return new ResponseData<>(201, "Tải lên thành công", fileService.initMetadata(metadataRequest));
+    }
+
+    @PostMapping("/is-owner-all-file/{userId}")
+    public ResponseData<Void> isOwnerAllFile(
+            @PathVariable UUID userId,
+            @RequestBody List<Long> fileIds) {
+        fileService.validateOwnerOfAllFile(userId, fileIds);
+        return new ResponseData<>(200, "OK");
+    }
 }
