@@ -10,7 +10,10 @@ import vn.thanh.storageservice.entity.OutboxEventStatus;
 import vn.thanh.storageservice.entity.OutboxEvent;
 import vn.thanh.storageservice.repository.OutboxEventRepository;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.util.Date;
 import java.util.List;
 
 @Component
@@ -39,6 +42,23 @@ public class OutboxProcessor {
                         }
                         outboxEventRepository.save(event);
                     });
+        }
+    }
+
+    // Chạy mỗi ngày lúc 2h sáng
+    @Scheduled(cron = "0 0 2 * * *")
+    @Transactional
+    public void cleanOldEvents() {
+        // giữ 7 ngày
+        Date threshold = Date.from(
+                LocalDate.now().minusDays(7)
+                        .atStartOfDay(ZoneId.systemDefault())
+                        .toInstant()
+        );
+
+        int deleted = outboxEventRepository.deleteOldSuccessEvents(threshold);
+        if (deleted > 0) {
+            log.info("Dọn dẹp {} outbox events thành công (trước ngày {})", deleted, threshold);
         }
     }
 }
