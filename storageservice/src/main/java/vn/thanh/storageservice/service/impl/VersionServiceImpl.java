@@ -1,19 +1,16 @@
 package vn.thanh.storageservice.service.impl;
 
-import feign.FeignException;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import vn.thanh.storageservice.client.MetadataService;
+import vn.thanh.storageservice.dto.UploadSignRequest;
 import vn.thanh.storageservice.dto.UploadUrlResponse;
 import vn.thanh.storageservice.dto.VersionDto;
-import vn.thanh.storageservice.dto.UploadSignRequest;
 import vn.thanh.storageservice.entity.Version;
 import vn.thanh.storageservice.entity.VersionStatus;
 import vn.thanh.storageservice.exception.ResourceAlreadyExistsException;
-import vn.thanh.storageservice.exception.ResourceNotFoundException;
 import vn.thanh.storageservice.mapper.VersionMapper;
 import vn.thanh.storageservice.repository.VersionRepo;
 import vn.thanh.storageservice.service.IAzureStorageService;
@@ -23,7 +20,6 @@ import vn.thanh.storageservice.utils.BlobNameUtil;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 @RequiredArgsConstructor

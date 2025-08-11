@@ -63,6 +63,7 @@ spring:
       properties:
         enable.idempotence: true # Tránh gửi trùng message khi retry
         max.in.flight.request.per.connection: 5 #số lượng request trên 1 connection <=5 mới chống gửi trùng
+        request.timeout.ms: 1 # 1 milisecond nếu k nhận dc repsonse phản hồi từ kafka thì xem như event gửi fail
 
 
 azure:

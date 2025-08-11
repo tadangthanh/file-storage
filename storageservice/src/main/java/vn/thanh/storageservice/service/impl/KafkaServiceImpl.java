@@ -16,6 +16,16 @@ public class KafkaServiceImpl implements IKafkaService {
     @Override
     public void eventUpdateMetadata(MetadataUpdate metadataUpdate) {
         log.info("sen event to metadata service to update: {}",metadataUpdate.toString());
-        kafkaTemplate.send("metadata",metadataUpdate);
+        kafkaTemplate.send("metadata",metadataUpdate).whenComplete((result, ex) -> {
+            if (ex == null) {
+                log.info("send event success");
+            } else {
+                log.error("Send Kafka fail: metadataId={}, payload={}, reason={}",
+                        metadataUpdate.getId(), metadataUpdate, ex.getMessage());
+
+                System.err.println("Gửi thất bại: " + ex.getMessage());
+                // retry / log / lưu DB
+            }
+        });;
     }
 }
