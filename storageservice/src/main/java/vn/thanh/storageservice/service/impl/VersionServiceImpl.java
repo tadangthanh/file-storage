@@ -5,8 +5,9 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import vn.thanh.storageservice.client.MetadataService;
+import vn.thanh.storageservice.dto.UploadUrlResponse;
 import vn.thanh.storageservice.dto.VersionDto;
-import vn.thanh.storageservice.dto.VersionInitRequest;
+import vn.thanh.storageservice.dto.UploadSignRequest;
 import vn.thanh.storageservice.entity.Version;
 import vn.thanh.storageservice.entity.VersionStatus;
 import vn.thanh.storageservice.exception.ResourceAlreadyExistsException;
@@ -14,9 +15,11 @@ import vn.thanh.storageservice.mapper.VersionMapper;
 import vn.thanh.storageservice.repository.VersionRepo;
 import vn.thanh.storageservice.service.IAzureStorageService;
 import vn.thanh.storageservice.service.IVersionService;
-import vn.thanh.storageservice.utils.AuthUtils;
+import vn.thanh.storageservice.utils.BlobNameUtil;
 
-import java.util.UUID;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @RequiredArgsConstructor
 @Service
@@ -29,25 +32,58 @@ public class VersionServiceImpl implements IVersionService {
     private final VersionMapper versionMapper;
 
     @Override
-    public String initVersion(VersionInitRequest versionInitRequest) {
-        log.info("init version: metadata id: {}", versionInitRequest.getMetadataId());
-        // kiem tra su ton tai cua metadata file ben metadata service
-        metadataService.getFileById(versionInitRequest.getMetadataId());
-        // kiem tra xem da ton tai phien ban cho metadata nay chua
-        Version versionExists = versionRepo.findFirstByMetadataIdOrderByVersionNumberDesc(versionInitRequest.getMetadataId()).orElse(null);
-        Version version = new Version();
-        //neu ton tai thi tao version moi bang cach tang version
-        if (versionExists!= null) {
-            int currentVersion = versionExists.getVersionNumber();
-            version.setVersionNumber(currentVersion + 1);
-        } else {
-            version.setVersionNumber(1);
+    // hàm upload tài liệu mới (tài liệu chưa tồn tại version nào )
+    @Transactional
+    public List<UploadUrlResponse> presignUpload(List<UploadSignRequest> uploadSignRequests) {
+        log.info("presignUpload (new documents - batch)");
+
+//        // 1. Kiểm tra metadata tồn tại cho tất cả
+        for (UploadSignRequest request : uploadSignRequests) {
+            metadataService.getFileById(request.getMetadataId());
         }
-        version.setMetadataId(versionInitRequest.getMetadataId());
-        version.setStatus(VersionStatus.UPLOADING);
-        versionRepo.save(version);
-        return azureStorageService.getUrlUpload(versionInitRequest.getMetadataId() + "/" + version.getId() + "/" + UUID.randomUUID() +"_"+ versionInitRequest.getOriginalFilename());
+
+        // 2. Chuẩn bị list Version để insert
+        List<Version> versionsToInsert = uploadSignRequests.stream()
+                .map(req -> {
+                    Version v = new Version();
+                    v.setMetadataId(req.getMetadataId());
+                    v.setVersionNumber(1);
+                    v.setStatus(VersionStatus.UPLOADING);
+                    return v;
+                })
+                .collect(Collectors.toList());
+
+        // 3. Insert tất cả version 1 lần
+        List<Version> savedVersions = versionRepo.saveAll(versionsToInsert);
+
+        // 4. Map lại để generate blobName + SAS URL
+        List<UploadUrlResponse> responses = new ArrayList<>();
+        for (int i = 0; i < savedVersions.size(); i++) {
+            Version version = savedVersions.get(i);
+            UploadSignRequest request = uploadSignRequests.get(i);
+
+            String blobName = BlobNameUtil.generateBlobName(
+                    request.getMetadataId(),
+                    version.getId(),
+                    request.getOriginalFilename()
+            );
+            version.setBlobName(blobName);
+
+            String uploadUrl = azureStorageService.getUrlUpload(blobName);
+
+            responses.add(new UploadUrlResponse(
+                    request.getOriginalFilename(),
+                    blobName,
+                    uploadUrl
+            ));
+        }
+
+        // 5. Cập nhật blobName cho tất cả version 1 lần (batch update)
+        versionRepo.saveAll(savedVersions);
+
+        return responses;
     }
+
 
     @Override
     public void completeUpload(Long versionId, VersionDto versionDto) {

@@ -4,20 +4,16 @@ import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 import vn.thanh.storageservice.dto.ResponseData;
-import vn.thanh.storageservice.dto.VersionInitRequest;
+import vn.thanh.storageservice.dto.UploadSignRequest;
+import vn.thanh.storageservice.dto.UploadUrlResponse;
 import vn.thanh.storageservice.service.IAzureStorageService;
 import vn.thanh.storageservice.service.IVersionService;
-import org.apache.tika.Tika;
 import org.apache.tika.mime.MimeTypes;
 import org.apache.tika.mime.MimeTypeException;
 
-import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.URLConnection;
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/v1/versions")
@@ -26,8 +22,8 @@ public class VersionRest {
     private final IVersionService versionService;
     private final IAzureStorageService azureStorageService;
     @PostMapping("/presign-url")
-    ResponseData<String> initVersion(@RequestBody VersionInitRequest versionInitRequest){
-        return new ResponseData<>(200,"ok", versionService.initVersion(versionInitRequest));
+    ResponseData<List<UploadUrlResponse>> initVersion(@RequestBody List<UploadSignRequest> uploadSignRequest){
+        return new ResponseData<>(200,"ok", versionService.presignUpload(uploadSignRequest));
     }
     @GetMapping("/view")
     public void downloadDocAsPdf(@RequestParam String blobName,@RequestParam String contentType,HttpServletResponse response) throws IOException {

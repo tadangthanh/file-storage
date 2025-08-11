@@ -1,11 +1,14 @@
 package vn.thanh.storageservice.service;
 
+import vn.thanh.storageservice.dto.UploadUrlResponse;
 import vn.thanh.storageservice.dto.VersionDto;
-import vn.thanh.storageservice.dto.VersionInitRequest;
+import vn.thanh.storageservice.dto.UploadSignRequest;
 import vn.thanh.storageservice.entity.Version;
 
+import java.util.List;
+
 public interface IVersionService {
-    String initVersion(VersionInitRequest versionInitRequest);
+    List<UploadUrlResponse> presignUpload(List<UploadSignRequest> uploadSignRequests);
 
     void completeUpload(Long versionId, VersionDto versionDto);
 
