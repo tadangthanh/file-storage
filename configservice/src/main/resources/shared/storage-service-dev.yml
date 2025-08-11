@@ -7,6 +7,10 @@ server:
       enabled: true
       charset: UTF-8
       force: true
+app:
+  kafka:
+    metadata-update-topic: metadata-update
+    metadata-cleanup-topic: metadata-cleanup
 spring:
   security:
     oauth2:

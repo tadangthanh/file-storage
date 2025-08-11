@@ -9,7 +9,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import vn.thanh.storageservice.dto.MetadataUpdate;
 import vn.thanh.storageservice.dto.VersionDto;
-import vn.thanh.storageservice.service.IKafkaService;
 import vn.thanh.storageservice.service.IOutboxService;
 import vn.thanh.storageservice.service.IVersionService;
 
@@ -75,7 +74,7 @@ public class BlobEventController {
                 versionDto.setMetadataId(metadataId);
                 // update version when upload successful
                 versionService.completeUpload(currentVersionId, versionDto);
-                outboxService.saveMetadataEvent(metadataUpdate);
+                outboxService.addUpdateMetadataEvent(metadataUpdate);
                 log.info("Blob created event: metadata id: {}, version id: {}, originalFileName: {}, contentType: {}, size: {}, blobName: {}", parts[2], parts[3], parts[4], contentType, size, blobName);
                 // TODO: Xử lý logic khi file được upload xong
             }

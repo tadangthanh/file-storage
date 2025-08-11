@@ -31,25 +31,21 @@ public class OutboxProcessor {
     @Scheduled(fixedDelay = 5000) // 5 giay
     @Transactional
     public void processOutbox() {
-        try {
-            List<OutboxEvent> events = outboxEventRepository.findEventsToSend(5, 50);
-            for (OutboxEvent event : events) {
-                kafkaTemplate.send(event.getTopic(), event.getMessageKey(), objectMapper.readValue(event.getPayload(), MetadataUpdate.class))
-                        .whenComplete((result, ex) -> {
-                            event.setLastAttemptAt(LocalDateTime.now());
-                            if (ex == null) {
-                                event.setStatus(OutboxEventStatus.SUCCESS);
-                                log.info("Gửi thành công event {} tới Kafka", event.getId());
-                            } else {
-                                event.setRetryCount(event.getRetryCount() + 1);
-                                event.setStatus(OutboxEventStatus.FAILED);
-                                log.error("❌ Gửi Kafka thất bại cho event {}: {}", event.getId(), ex.getMessage());
-                            }
-                            outboxEventRepository.save(event);
-                        });
-            }
-        } catch (JsonProcessingException e) {
-            throw new JsonSerializeException(e.getMessage());
+        List<OutboxEvent> events = outboxEventRepository.findEventsToSend(5, 50);
+        for (OutboxEvent event : events) {
+            kafkaTemplate.send(event.getTopic(), event.getMessageKey(), event.getPayload())
+                    .whenComplete((result, ex) -> {
+                        event.setLastAttemptAt(LocalDateTime.now());
+                        if (ex == null) {
+                            event.setStatus(OutboxEventStatus.SUCCESS);
+                            log.info("Gửi thành công event {} tới Kafka", event.getId());
+                        } else {
+                            event.setRetryCount(event.getRetryCount() + 1);
+                            event.setStatus(OutboxEventStatus.FAILED);
+                            log.error("❌ Gửi Kafka thất bại cho event {}: {}", event.getId(), ex.getMessage());
+                        }
+                        outboxEventRepository.save(event);
+                    });
         }
     }
 

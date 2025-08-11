@@ -3,7 +3,7 @@ package vn.thanh.metadataservice.service.impl;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.hibernate.boot.Metadata;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -34,8 +34,9 @@ public class MetadataStorageServiceImpl implements IMetadataStorageService {
     private final CategoryRepo categoryRepo;
     private final CategoryValidation categoryValidation;
     private final FileMapper fileMapper;
-//    @Value("${app.delete.document-retention-days}")
-//    private int documentRetentionDays;
+    @Value("${app.delete.document-retention-days}")
+    private int documentRetentionDays;
+
 
     private File getFileByIdOrThrow(Long id) {
         return fileRepo.findById(id).orElseThrow(() -> {
@@ -135,7 +136,7 @@ public class MetadataStorageServiceImpl implements IMetadataStorageService {
         log.info("soft delete file with id {}", fileId);
         File file = getFileByIdOrThrow(fileId);
         file.setDeletedAt(LocalDateTime.now());
-        file.setPermanentDeleteAt(LocalDateTime.now().plusDays(7));
+        file.setPermanentDeleteAt(LocalDateTime.now().plusDays(documentRetentionDays));
     }
 
     @Override
@@ -157,7 +158,7 @@ public class MetadataStorageServiceImpl implements IMetadataStorageService {
     }
 
     // Lắng nghe topic "my-topic" với groupId "my-consumer-group"
-    @KafkaListener(topics = "metadata", groupId = "metadata-group")
+    @KafkaListener(topics = "${app.kafka.metadata-update-topic}", groupId = "${app.kafka.metadata-group}")
     public void listenUpdateMetadata(MetadataUpdate metadataUpdate) {
         log.info("received metadata update: {}", metadataUpdate.toString());
         if (metadataUpdate.getId() == null) {
@@ -166,6 +167,12 @@ public class MetadataStorageServiceImpl implements IMetadataStorageService {
         File fileExist = getFileByIdOrThrow(metadataUpdate.getId());
         fileMapper.updateMetadata(fileExist, metadataUpdate);
         fileRepo.save(fileExist);
+    }
+
+    @KafkaListener(topics = "${app.kafka.metadata-cleanup-topic}", groupId = "${app.kafka.metadata-group}")
+    public void listenCleanupMetadata(List<Long> metadataIds) {
+        log.info("clean up metadata: {}", metadataIds.toString());
+        fileRepo.deleteAllById(metadataIds);
     }
 
 }
