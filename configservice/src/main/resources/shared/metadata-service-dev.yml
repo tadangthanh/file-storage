@@ -32,6 +32,8 @@ spring:
       value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
       max-poll-records: 500         # Số lượng record tối đa mỗi lần poll
       properties:
+        enable.idempotence: true # Tránh gửi trùng message khi retry
+        max.in.flight.request.per.connection: 5 #số lượng request trên 1 connection <=5 mới chống gửi trùng
         spring.json.trusted.packages: "vn.thanh.metadataservice.dto"    # hoặc "*" (unsafe)
     listener:
       ack-mode: manual              # Nếu enable-auto-commit=false thì thường dùng manual
