@@ -2,6 +2,8 @@ package vn.thanh.storageservice.interceptor;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import feign.Response;
 import feign.Util;
 import feign.codec.ErrorDecoder;
@@ -22,17 +24,18 @@ public class CustomErrorDecoder implements ErrorDecoder {
             if (response.body() != null) {
                 String body = Util.toString(response.body().asReader(StandardCharsets.UTF_8));
                 ObjectMapper mapper = new ObjectMapper();
-                JsonNode node = mapper.readTree(body);
-                String message = node.has("message") ? node.get("message").asText() : "Lỗi không xác định";
-
+                mapper.registerModule(new JavaTimeModule()); // <-- quan trọng
+                mapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
+                ErrorResponse obj = mapper.readValue(body, ErrorResponse.class);
                 if (response.status() == 404) {
-                    return new ResourceNotFoundException(message);
+                    return new ResourceNotFoundException(obj.getMessage());
                 }
                 if (response.status() == 403) {
-                    return new AccessDeniedException(message);
+                    return new AccessDeniedException(obj.getMessage());
                 }
             }
         } catch (IOException ex) {
+            System.out.println("exception: "+ex.getMessage());
             // Nếu parse lỗi thì trả fallback message
             if (response.status() == 404) {
                 return new ResourceNotFoundException("Không tìm thấy tài nguyên");
