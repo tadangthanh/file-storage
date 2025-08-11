@@ -53,7 +53,7 @@ public class BlobEventController {
                 String[] parts = path.split("/");
                 Long metadataId = Long.parseLong(parts[2]);
                 Long currentVersionId = Long.parseLong(parts[3]);
-                String originalFileName = parts[4];
+                String originalFileName = parts[4].split("_")[1];
                 String contentType = data.get("contentType").toString();
                 Number contentLengthNum = (Number) data.get("contentLength");
                 String blobName = String.join("/", Arrays.copyOfRange(parts, 2, parts.length));

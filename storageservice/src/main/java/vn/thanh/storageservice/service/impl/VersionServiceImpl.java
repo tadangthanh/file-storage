@@ -14,6 +14,9 @@ import vn.thanh.storageservice.mapper.VersionMapper;
 import vn.thanh.storageservice.repository.VersionRepo;
 import vn.thanh.storageservice.service.IAzureStorageService;
 import vn.thanh.storageservice.service.IVersionService;
+import vn.thanh.storageservice.utils.AuthUtils;
+
+import java.util.UUID;
 
 @RequiredArgsConstructor
 @Service
@@ -43,7 +46,7 @@ public class VersionServiceImpl implements IVersionService {
         version.setMetadataId(versionInitRequest.getMetadataId());
         version.setStatus(VersionStatus.UPLOADING);
         versionRepo.save(version);
-        return azureStorageService.getUrlUpload(versionInitRequest.getMetadataId() + "/" + version.getId() + "/" + versionInitRequest.getOriginalFilename());
+        return azureStorageService.getUrlUpload(versionInitRequest.getMetadataId() + "/" + version.getId() + "/" + UUID.randomUUID() +"_"+ versionInitRequest.getOriginalFilename());
     }
 
     @Override

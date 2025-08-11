@@ -3,6 +3,7 @@ package vn.thanh.storageservice.service;
 import java.io.File;
 import java.io.InputStream;
 import java.util.List;
+import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
 public interface IAzureStorageService {
@@ -23,4 +24,5 @@ public interface IAzureStorageService {
     String getBlobUrl(String blobName); // Lấy url của blob
 
     String getUrlUpload(String blobName);
+
 }

@@ -3,7 +3,6 @@ package vn.thanh.storageservice.service.impl;
 import com.azure.storage.blob.BlobClient;
 import com.azure.storage.blob.BlobContainerClient;
 import com.azure.storage.blob.BlobServiceClient;
-import com.azure.storage.blob.BlobServiceClientBuilder;
 import com.azure.storage.blob.models.BlobStorageException;
 import com.azure.storage.blob.sas.BlobSasPermission;
 import com.azure.storage.blob.sas.BlobServiceSasSignatureValues;
@@ -292,7 +291,6 @@ public class AzureStorageServiceImpl implements IAzureStorageService {
 //--data-binary '@/home/thanh/Projects/microservice_jmaster/keycloak.txt'
 
     }
-
 
     private InputStream getInputStreamBlob(String containerName, String blobName) {
         try {
