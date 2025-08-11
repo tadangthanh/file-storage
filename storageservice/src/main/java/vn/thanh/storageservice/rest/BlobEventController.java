@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.RestController;
 import vn.thanh.storageservice.dto.MetadataUpdate;
 import vn.thanh.storageservice.dto.VersionDto;
 import vn.thanh.storageservice.service.IKafkaService;
+import vn.thanh.storageservice.service.IOutboxService;
 import vn.thanh.storageservice.service.IVersionService;
 
 import java.net.URI;
@@ -24,8 +25,9 @@ import java.util.Map;
 @RequiredArgsConstructor
 @Slf4j
 public class BlobEventController {
-    private final IKafkaService kafkaService;
+//    private final IKafkaService kafkaService;
     private final IVersionService versionService;
+    private final IOutboxService outboxService;
 
     @PostMapping
     public ResponseEntity<Map<String, String>> handleEvents(@RequestBody List<Map<String, Object>> events) throws URISyntaxException {
@@ -73,7 +75,7 @@ public class BlobEventController {
                 versionDto.setMetadataId(metadataId);
                 // update version when upload successful
                 versionService.completeUpload(currentVersionId, versionDto);
-                kafkaService.eventUpdateMetadata(metadataUpdate);
+                outboxService.saveMetadataEvent(metadataUpdate);
                 log.info("Blob created event: metadata id: {}, version id: {}, originalFileName: {}, contentType: {}, size: {}, blobName: {}", parts[2], parts[3], parts[4], contentType, size, blobName);
                 // TODO: Xử lý logic khi file được upload xong
             }
