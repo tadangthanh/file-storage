@@ -1,6 +1,5 @@
 package vn.thanh.storageservice.interceptor;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
@@ -12,7 +11,6 @@ import vn.thanh.storageservice.exception.ErrorResponse;
 import vn.thanh.storageservice.exception.ResourceNotFoundException;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 
 public class CustomErrorDecoder implements ErrorDecoder {
@@ -35,7 +33,6 @@ public class CustomErrorDecoder implements ErrorDecoder {
                 }
             }
         } catch (IOException ex) {
-            System.out.println("exception: "+ex.getMessage());
             // Nếu parse lỗi thì trả fallback message
             if (response.status() == 404) {
                 return new ResourceNotFoundException("Không tìm thấy tài nguyên");

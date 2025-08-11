@@ -14,6 +14,7 @@ import java.util.List;
 import java.util.UUID;
 
 @FeignClient(name = "metadata-service", configuration = FeignConfig.class)
+
 public interface MetadataService {
     @GetMapping("/api/v1/files/{metadataId}")
     @CircuitBreaker(name = "metadataService", fallbackMethod = "fallback")
@@ -25,10 +26,9 @@ public interface MetadataService {
 
     default void fallback(Long metadataId, Throwable throwable) {
         // Fallback logic can be implemented here, e.g., logging the error or sending a default response
-        System.out.println("------------có lỗi khi get File by ID: " + metadataId);
     }
+
     default void isOwnerAllFallback(UUID userId, List<Long> fileIds, Throwable throwable) {
-        System.out.println("------------có lỗi khi kiểm tra quyền sở hữu files của user " + userId);
         if (throwable instanceof ResourceNotFoundException) {
             throw (ResourceNotFoundException) throwable;
         }
