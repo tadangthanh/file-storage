@@ -1,5 +1,12 @@
 server:
   port: 9080
+app:
+  kafka:
+    metadata-update-topic: metadata-update
+    metadata-cleanup-topic: metadata-cleanup
+    metadata-group: metadata-group
+  delete:
+    document-retention-days: 7
 spring:
   #data source
   datasource:
@@ -19,10 +26,13 @@ spring:
       auto-offset-reset: earliest   # earliest = đọc từ đầu nếu chưa có offset, latest = đọc mới nhất
       enable-auto-commit: false     # false = tự xử lý commit offset
       key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
-      value-deserializer: org.apache.kafka.common.serialization.ByteArrayDeserializer
+#      value-deserializer: org.apache.kafka.common.serialization.ByteArrayDeserializer #neu producer gui object thi dung cai nay
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer # neu producer gui string json thi dung cai nay
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
       value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
       max-poll-records: 500         # Số lượng record tối đa mỗi lần poll
+      properties:
+        spring.json.trusted.packages: "vn.thanh.metadataservice.dto"    # hoặc "*" (unsafe)
     listener:
       ack-mode: manual              # Nếu enable-auto-commit=false thì thường dùng manual
       concurrency: 3                # Số thread xử lý song song

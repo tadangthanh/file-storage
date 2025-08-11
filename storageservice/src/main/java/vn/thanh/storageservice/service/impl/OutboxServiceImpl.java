@@ -5,13 +5,16 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import vn.thanh.storageservice.dto.MetadataUpdate;
-import vn.thanh.storageservice.entity.OutboxEventStatus;
 import vn.thanh.storageservice.entity.OutboxEvent;
+import vn.thanh.storageservice.entity.OutboxEventStatus;
 import vn.thanh.storageservice.exception.JsonSerializeException;
 import vn.thanh.storageservice.repository.OutboxEventRepository;
 import vn.thanh.storageservice.service.IOutboxService;
+
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -19,15 +22,18 @@ import vn.thanh.storageservice.service.IOutboxService;
 public class OutboxServiceImpl implements IOutboxService {
     private final OutboxEventRepository outboxEventRepository;
     private final ObjectMapper objectMapper;
+    @Value("${app.kafka.metadata-update-topic}")
+    private String metadataUpdateTopic;
+    @Value("${app.kafka.metadata-cleanup-topic}")
+    private String metadataCleanupTopic;
 
     @Override
     @Transactional
-    public void saveMetadataEvent(MetadataUpdate update) {
+    public void addUpdateMetadataEvent(MetadataUpdate update) {
         try {
             String payload = objectMapper.writeValueAsString(update);
-
             OutboxEvent event = OutboxEvent.builder()
-                    .topic("metadata")
+                    .topic(metadataUpdateTopic)
                     .payload(payload)
                     .status(OutboxEventStatus.PENDING)
                     .retryCount(0)
@@ -37,4 +43,21 @@ public class OutboxServiceImpl implements IOutboxService {
             throw new JsonSerializeException("Lỗi serialize event");
         }
     }
+
+    @Override
+    public void addMetadataCleanUpEvent(List<Long> metadataIds) {
+        try {
+            String payload = objectMapper.writeValueAsString(metadataIds);
+            OutboxEvent event = OutboxEvent.builder()
+                    .topic(metadataCleanupTopic)
+                    .payload(payload)
+                    .status(OutboxEventStatus.PENDING)
+                    .retryCount(0)
+                    .build();
+            outboxEventRepository.save(event);
+        } catch (JsonProcessingException e) {
+            throw new JsonSerializeException("Lỗi serialize event");
+        }
+    }
+
 }
