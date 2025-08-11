@@ -12,6 +12,7 @@ import vn.thanh.metadataservice.service.IFileService;
 import vn.thanh.metadataservice.validation.ValidFiles;
 
 import java.util.List;
+import java.util.UUID;
 
 
 @RequiredArgsConstructor
@@ -79,4 +80,11 @@ public class FileRest {
         return new ResponseData<>(201, "Tải lên thành công", fileService.initMetadata(metadataRequest));
     }
 
+    @PostMapping("/is-owner-all-file/{userId}")
+    public ResponseData<Void> isOwnerAllFile(
+            @PathVariable UUID userId,
+            @RequestBody List<Long> fileIds) {
+        fileService.validateOwnerOfAllFile(userId, fileIds);
+        return new ResponseData<>(200, "OK");
+    }
 }

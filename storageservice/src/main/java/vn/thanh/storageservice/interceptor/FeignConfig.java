@@ -2,6 +2,7 @@ package vn.thanh.storageservice.interceptor;
 
 
 import feign.RequestInterceptor;
+import feign.codec.ErrorDecoder;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpHeaders;
@@ -11,7 +12,7 @@ import org.springframework.security.oauth2.client.web.DefaultOAuth2AuthorizedCli
 import org.springframework.security.oauth2.client.web.OAuth2AuthorizedClientRepository;
 
 @Configuration
-public class OAuth2FeignConfig {
+public class FeignConfig {
 
     @Bean
     public OAuth2AuthorizedClientManager authorizedClientManager(
@@ -46,5 +47,9 @@ public class OAuth2FeignConfig {
             String token = client.getAccessToken().getTokenValue();
             requestTemplate.header(HttpHeaders.AUTHORIZATION, "Bearer " + token);
         };
+    }
+    @Bean
+    public ErrorDecoder errorDecoder() {
+        return new CustomErrorDecoder();
     }
 }

@@ -16,7 +16,7 @@ spring:
             authorization-grant-type: client_credentials
             client-id: storage-service
             client-secret: ${storage-service-client-secret}
-            scope: get
+            scope: read
             provider: springkeycloak
         provider:
           springkeycloak:

@@ -1,8 +1,10 @@
 package vn.thanh.storageservice.service.impl;
 
+import feign.FeignException;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import vn.thanh.storageservice.client.MetadataService;
 import vn.thanh.storageservice.dto.UploadUrlResponse;
@@ -11,14 +13,17 @@ import vn.thanh.storageservice.dto.UploadSignRequest;
 import vn.thanh.storageservice.entity.Version;
 import vn.thanh.storageservice.entity.VersionStatus;
 import vn.thanh.storageservice.exception.ResourceAlreadyExistsException;
+import vn.thanh.storageservice.exception.ResourceNotFoundException;
 import vn.thanh.storageservice.mapper.VersionMapper;
 import vn.thanh.storageservice.repository.VersionRepo;
 import vn.thanh.storageservice.service.IAzureStorageService;
 import vn.thanh.storageservice.service.IVersionService;
+import vn.thanh.storageservice.utils.AuthUtils;
 import vn.thanh.storageservice.utils.BlobNameUtil;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @RequiredArgsConstructor
@@ -38,20 +43,17 @@ public class VersionServiceImpl implements IVersionService {
         log.info("presignUpload (new documents - batch)");
 
 //        // 1. Kiểm tra metadata tồn tại cho tất cả
-        for (UploadSignRequest request : uploadSignRequests) {
-            metadataService.getFileById(request.getMetadataId());
-        }
+        List<Long> metadataIds = uploadSignRequests.stream().map(UploadSignRequest::getMetadataId).collect(Collectors.toList());
+        metadataService.isOwnerAll(AuthUtils.getUserId(), metadataIds);
 
         // 2. Chuẩn bị list Version để insert
-        List<Version> versionsToInsert = uploadSignRequests.stream()
-                .map(req -> {
-                    Version v = new Version();
-                    v.setMetadataId(req.getMetadataId());
-                    v.setVersionNumber(1);
-                    v.setStatus(VersionStatus.UPLOADING);
-                    return v;
-                })
-                .collect(Collectors.toList());
+        List<Version> versionsToInsert = uploadSignRequests.stream().map(req -> {
+            Version v = new Version();
+            v.setMetadataId(req.getMetadataId());
+            v.setVersionNumber(1);
+            v.setStatus(VersionStatus.UPLOADING);
+            return v;
+        }).collect(Collectors.toList());
 
         // 3. Insert tất cả version 1 lần
         List<Version> savedVersions = versionRepo.saveAll(versionsToInsert);
@@ -62,20 +64,12 @@ public class VersionServiceImpl implements IVersionService {
             Version version = savedVersions.get(i);
             UploadSignRequest request = uploadSignRequests.get(i);
 
-            String blobName = BlobNameUtil.generateBlobName(
-                    request.getMetadataId(),
-                    version.getId(),
-                    request.getOriginalFilename()
-            );
+            String blobName = BlobNameUtil.generateBlobName(request.getMetadataId(), version.getId(), request.getOriginalFilename());
             version.setBlobName(blobName);
 
             String uploadUrl = azureStorageService.getUrlUpload(blobName);
 
-            responses.add(new UploadUrlResponse(
-                    request.getOriginalFilename(),
-                    blobName,
-                    uploadUrl
-            ));
+            responses.add(new UploadUrlResponse(request.getOriginalFilename(), blobName, uploadUrl));
         }
 
         // 5. Cập nhật blobName cho tất cả version 1 lần (batch update)
