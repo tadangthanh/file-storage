@@ -6,10 +6,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Pageable;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartFile;
 import vn.thanh.metadataservice.dto.*;
 import vn.thanh.metadataservice.service.IFileService;
-import vn.thanh.metadataservice.validation.ValidFiles;
 
 import java.util.List;
 import java.util.UUID;
@@ -23,18 +21,10 @@ import java.util.UUID;
 public class FileRest {
     private final IFileService fileService;
 
-    @PostMapping
-    public ResponseData<List<FileResponse>> createMetadata(@ValidFiles @RequestPart("files") MultipartFile[] files) {
-        List<FileResponse> result = fileService.uploadFile(List.of(files));
-        return new ResponseData<>(201, "Thành công", result);
+    @PostMapping("/init")
+    public ResponseData<FileResponse> intMetadata(@RequestBody MetadataRequest metadataRequest) {
+        return new ResponseData<>(201, "Thành công", fileService.initMetadata(metadataRequest));
     }
-
-    @PostMapping("/category/{categoryId}")
-    public ResponseData<List<FileResponse>> createMetadataCategory(@PathVariable Long categoryId, @ValidFiles @RequestPart("files") MultipartFile[] files) {
-        List<FileResponse> result = fileService.uploadFileCategory(categoryId, List.of(files));
-        return new ResponseData<>(201, "Thành công", result);
-    }
-
 
     @DeleteMapping("/{fileId}/hard")
     public ResponseData<Void> hardDelete(@PathVariable Long fileId) {
@@ -73,11 +63,6 @@ public class FileRest {
     @GetMapping("/search")
     public ResponseData<PageResponse<List<FileResponse>>> search(Pageable pageable, @RequestParam(required = false, value = "files") String[] files) {
         return new ResponseData<>(200, "thành công", fileService.getPage(pageable, files));
-    }
-
-    @PostMapping("/init")
-    public ResponseData<FileResponse> initFile(@RequestBody MetadataRequest metadataRequest) {
-        return new ResponseData<>(201, "Tải lên thành công", fileService.initMetadata(metadataRequest));
     }
 
     @PostMapping("/is-owner-all-file/{userId}")

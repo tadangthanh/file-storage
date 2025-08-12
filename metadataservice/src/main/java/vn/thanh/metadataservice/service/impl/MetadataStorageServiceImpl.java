@@ -102,11 +102,13 @@ public class MetadataStorageServiceImpl implements IMetadataStorageService {
     public File initMetadata(MetadataRequest metadataRequest) {
         log.info("init metadata ");
         File file = fileMapper.toFile(metadataRequest);
-        file.setOwnerId(AuthUtils.getUserId());
+        UUID userId = AuthUtils.getUserId();
+        file.setOwnerId(userId);
         file = fileRepo.save(file);
         if (metadataRequest.getCategoryId() == null) {
             return file;
         }
+        categoryValidation.validIsOwnerCategory(metadataRequest.getCategoryId(), userId);
         Category category = categoryRepo.findById(metadataRequest.getCategoryId()).orElseThrow(() -> {
             log.info("category id: {} not found", metadataRequest.getCategoryId());
             return new ResourceNotFoundException("category not found");

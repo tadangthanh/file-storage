@@ -10,7 +10,6 @@ import java.time.LocalDateTime;
 @Setter
 public class FileResponse extends BaseDto {
     private String type;
-    private int version;
     private String name;
     @JsonInclude(JsonInclude.Include.NON_NULL)
     private Long categoryId;

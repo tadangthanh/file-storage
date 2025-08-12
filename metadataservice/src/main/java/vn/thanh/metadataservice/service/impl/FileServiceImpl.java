@@ -7,7 +7,6 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
-import org.springframework.web.multipart.MultipartFile;
 import vn.thanh.metadataservice.dto.*;
 import vn.thanh.metadataservice.entity.Category;
 import vn.thanh.metadataservice.entity.File;
@@ -38,26 +37,7 @@ public class FileServiceImpl implements IFileService {
     private final FileRepo fileRepo;
     private final FileMapper fileMapper;
     private final CategoryRepo categoryRepo;
-    private final CategoryValidation categoryValidation;
     private final IOutboxService outboxService;
-
-    @Override
-    public List<FileResponse> uploadFile(List<MultipartFile> files) {
-        log.info("up load file empty category");
-        // luu db
-        List<File> documents = metadataStorageService.saveFiles(files);
-        // send kafka upload document
-        return fileMapper.toResponse(documents);
-    }
-
-    @Override
-    public List<FileResponse> uploadFileCategory(Long categoryId, List<MultipartFile> files) {
-        log.info("upload file with category id {}", categoryId);
-        categoryValidation.validIsOwnerCategory(categoryId, AuthUtils.getUserId());
-        List<File> documents = metadataStorageService.saveFilesCategory(files, categoryId);
-        // send file to storage service
-        return fileMapper.toResponse(documents);
-    }
 
     @Override
     public FileResponse initMetadata(MetadataRequest metadataRequest) {
