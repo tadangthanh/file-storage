@@ -21,6 +21,7 @@ import vn.thanh.metadataservice.repository.specification.FileSpecification;
 import vn.thanh.metadataservice.repository.specification.SpecificationUtil;
 import vn.thanh.metadataservice.service.IFileService;
 import vn.thanh.metadataservice.service.IMetadataStorageService;
+import vn.thanh.metadataservice.service.IOutboxService;
 import vn.thanh.metadataservice.utils.AuthUtils;
 import vn.thanh.metadataservice.utils.DocumentTypeUtil;
 import vn.thanh.metadataservice.utils.FileUtil;
@@ -38,6 +39,7 @@ public class FileServiceImpl implements IFileService {
     private final FileMapper fileMapper;
     private final CategoryRepo categoryRepo;
     private final CategoryValidation categoryValidation;
+    private final IOutboxService outboxService;
 
     @Override
     public List<FileResponse> uploadFile(List<MultipartFile> files) {
@@ -162,6 +164,7 @@ public class FileServiceImpl implements IFileService {
     public void hardDeleteFile(Long fileId) {
         // check permission
         metadataStorageService.hardDeleteFile(fileId);
+        outboxService.addDeleteMetadataEvent(List.of(fileId));
     }
 
     @Override

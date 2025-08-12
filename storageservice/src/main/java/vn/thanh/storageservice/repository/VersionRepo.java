@@ -23,4 +23,7 @@ public interface VersionRepo extends JpaRepository<Version, Long> {
     );
 
     Optional<Version> findFirstByMetadataIdOrderByVersionNumberDesc(Long metadataId);
+
+    @Query("SELECT v FROM Version v WHERE v.metadataId IN :metadataIds")
+    List<Version> findAllByMetadataIds(@Param("metadataIds") List<Long> metadataIds);
 }
