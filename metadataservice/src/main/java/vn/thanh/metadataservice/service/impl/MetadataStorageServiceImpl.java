@@ -4,7 +4,12 @@ import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.kafka.annotation.DltHandler;
 import org.springframework.kafka.annotation.KafkaListener;
+import org.springframework.kafka.annotation.RetryableTopic;
+import org.springframework.kafka.support.KafkaHeaders;
+import org.springframework.messaging.handler.annotation.Header;
+import org.springframework.retry.annotation.Backoff;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import vn.thanh.metadataservice.dto.MetadataRequest;
@@ -159,17 +164,18 @@ public class MetadataStorageServiceImpl implements IMetadataStorageService {
         fileRepo.saveAll(files);
     }
 
-    // Lắng nghe topic "my-topic" với groupId "my-consumer-group"
     @KafkaListener(topics = "${app.kafka.metadata-update-topic}", groupId = "${app.kafka.metadata-group}")
     public void listenUpdateMetadata(MetadataUpdate metadataUpdate) {
         log.info("received metadata update: {}", metadataUpdate.toString());
-        if (metadataUpdate.getId() == null) {
-            throw new BadRequestException("Lỗi tải file lên");
-        }
-        File fileExist = getFileByIdOrThrow(metadataUpdate.getId());
-        fileMapper.updateMetadata(fileExist, metadataUpdate);
-        fileRepo.save(fileExist);
+        throw new RuntimeException("error test");
+//        if (metadataUpdate.getId() == null) {
+//            throw new BadRequestException("Lỗi tải file lên");
+//        }
+//        File fileExist = getFileByIdOrThrow(metadataUpdate.getId());
+//        fileMapper.updateMetadata(fileExist, metadataUpdate);
+//        fileRepo.save(fileExist);
     }
+
 
     @KafkaListener(topics = "${app.kafka.metadata-cleanup-topic}", groupId = "${app.kafka.metadata-group}")
     public void listenCleanupMetadata(List<Long> metadataIds) {

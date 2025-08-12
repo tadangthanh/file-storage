@@ -19,15 +19,16 @@ public class KafkaConfig {
         // topicname, partition number,replication number (thuong bang so broker server)
         return new NewTopic(metadataUpdateTopic, 2, (short) 3);
     }
+
     @Bean
     NewTopic metadataCleanupTopic() {
         // topicname, partition number,replication number (thuong bang so broker server)
         return new NewTopic(metadataCleanupTopic, 2, (short) 3);
     }
+
     @Bean
     NewTopic metadataDeleteTopic() {
         // topicname, partition number,replication number (thuong bang so broker server)
         return new NewTopic(metadataDeleteTopic, 2, (short) 3);
     }
-
 }
