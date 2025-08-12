@@ -12,7 +12,6 @@ import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.oauth2.jwt.JwtException;
 import org.springframework.stereotype.Service;
-import vn.thanh.storageservice.exception.BadRequestException;
 import vn.thanh.storageservice.exception.InvalidTokenException;
 
 import java.util.ArrayList;
