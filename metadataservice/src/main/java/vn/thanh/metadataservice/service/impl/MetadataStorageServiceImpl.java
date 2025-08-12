@@ -9,6 +9,7 @@ import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.kafka.annotation.RetryableTopic;
 import org.springframework.kafka.support.KafkaHeaders;
 import org.springframework.messaging.handler.annotation.Header;
+import org.springframework.messaging.handler.annotation.Headers;
 import org.springframework.retry.annotation.Backoff;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -27,6 +28,7 @@ import vn.thanh.metadataservice.utils.AuthUtils;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 @Service
@@ -164,18 +166,28 @@ public class MetadataStorageServiceImpl implements IMetadataStorageService {
         fileRepo.saveAll(files);
     }
 
+    @RetryableTopic(
+            attempts = "3", // Tổng số lần thử = 3 (lần gốc + 2 lần retry)
+            backoff = @Backoff(delay = 1000, multiplier = 1.0),
+            dltTopicSuffix = ".DLT", // Hậu tố DLT
+            autoCreateTopics = "true",// Spring sẽ tự tạo topic retry & DLT
+            exclude = {NullPointerException.class, RuntimeException.class} // danh sach exclude ko retry ma day sang thang DLT
+    )
     @KafkaListener(topics = "${app.kafka.metadata-update-topic}", groupId = "${app.kafka.metadata-group}")
     public void listenUpdateMetadata(MetadataUpdate metadataUpdate) {
         log.info("received metadata update: {}", metadataUpdate.toString());
-        throw new RuntimeException("error test");
-//        if (metadataUpdate.getId() == null) {
-//            throw new BadRequestException("Lỗi tải file lên");
-//        }
-//        File fileExist = getFileByIdOrThrow(metadataUpdate.getId());
-//        fileMapper.updateMetadata(fileExist, metadataUpdate);
-//        fileRepo.save(fileExist);
+        if (metadataUpdate.getId() == null) {
+            throw new BadRequestException("Lỗi tải file lên");
+        }
+        File fileExist = getFileByIdOrThrow(metadataUpdate.getId());
+        fileMapper.updateMetadata(fileExist, metadataUpdate);
+        fileRepo.save(fileExist);
     }
 
+    @DltHandler
+    public void dltHandler(MetadataUpdate metadataUpdate) {
+        System.out.println("--------Message: "+metadataUpdate.toString());
+    }
 
     @KafkaListener(topics = "${app.kafka.metadata-cleanup-topic}", groupId = "${app.kafka.metadata-group}")
     public void listenCleanupMetadata(List<Long> metadataIds) {

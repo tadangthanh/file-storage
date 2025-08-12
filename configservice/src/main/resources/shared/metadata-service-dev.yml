@@ -15,22 +15,28 @@ spring:
     username: ${MYSQL_USER:root}
     password: ${MYSQL_PASSWORD:123456}
   jpa:
-    show-sql: true
+#    show-sql: true
     hibernate:
       ddl-auto: update
     generate-ddl: false
     database-platform: org.hibernate.dialect.MySQL8Dialect
   kafka:
-    bootstrap-servers: localhost:9092,localhost:9093,localhost:9094
+    producer:
+      bootstrap-servers: localhost:9092,localhost:9093,localhost:9094
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+      #0: khi để 0, service này gửi event lên kafka server, thì nó sẽ k quan tâm event có lưu THÀNH CÔNG vào kafka server hay k mà xác minh luôn đã gửi thành công
+      #1: lưu thành công vào leader nhưng k đợi lưu vào follower, trường hợp vừa lưu vào leader thì leader sập sẽ bị mất event
+      #-1: event phải lưu thành công vào leader và follower
+      acks: -1
+      retries: 1 # số lần gửi lại khi acks bị fail
     consumer:
+      bootstrap-servers: localhost:9092,localhost:9093,localhost:9094
       group-id: metadata-group   # Tên nhóm consumer
       auto-offset-reset: earliest   # earliest = đọc từ đầu nếu chưa có offset, latest = đọc mới nhất
       enable-auto-commit: false     # false = tự xử lý commit offset
       key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
-      #      value-deserializer: org.apache.kafka.common.serialization.ByteArrayDeserializer #neu producer gui object thi dung cai nay
-      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer # neu producer gui string json thi dung cai nay
-      key-serializer: org.apache.kafka.common.serialization.StringSerializer
-      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
       max-poll-records: 500         # Số lượng record tối đa mỗi lần poll
       properties:
         enable.idempotence: true # Tránh gửi trùng message khi retry
