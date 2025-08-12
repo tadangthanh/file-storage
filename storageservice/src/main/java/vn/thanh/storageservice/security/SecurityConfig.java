@@ -1,6 +1,7 @@
 package vn.thanh.storageservice.security;
 
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
@@ -8,6 +9,8 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.oauth2.jwt.JwtDecoder;
+import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
 import org.springframework.security.web.SecurityFilterChain;
 
@@ -21,17 +24,30 @@ public class SecurityConfig {
     private static final String GROUPS = "groups";
     private static final String REALM_ACCESS_CLAIM = "realm_access";
     private static final String ROLES_CLAIM = "roles";
+    private final String[] WHITE_LIST = {
+            "/api/storage/public/**",
+            "/api/blob-events",
+            "/api/v1/versions/view/**",
+            "/actuator/**",
+            "/swagger-ui/**",
+            "/v3/api-docs/**",
+            "/api/v1/versions/*/download/*",
+
+    };
+    @Value("${spring.security.oauth2.resourceServer.jwt.jwk-set-uri}")
+    private String jwkSetUri;
+
     // so với cấu hình trên method thì nó phải lọt qua đây trước
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
                 .csrf(AbstractHttpConfigurer::disable) // Tắt CSRF cho API
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/storage/public/**", "/api/blob-events","/api/v1/versions/view/**","/actuator/**", "/swagger-ui/**", "/v3/api-docs/**").permitAll()
+                        .requestMatchers(WHITE_LIST).permitAll()
                         .anyRequest().authenticated()
                 )
                 .oauth2ResourceServer(oauth2 -> oauth2
-                        .jwt(jwt -> jwt.jwtAuthenticationConverter(jwtAuthenticationConverter()))
+                                .jwt(jwt -> jwt.jwtAuthenticationConverter(jwtAuthenticationConverter()))
 //                        .bearerTokenResolver(new CustomBearerTokenResolver())
                 );
 
@@ -67,6 +83,7 @@ public class SecurityConfig {
 //
 //        return converter;
 //    }
+
     /// decode token o day https://jwt.io/
     /// // dung cho Keycloak
     public JwtAuthenticationConverter jwtAuthenticationConverter() {
@@ -94,10 +111,9 @@ public class SecurityConfig {
 
         return converter;
     }
-// dung cho authorizaion server tu code, k dung cho keycloack
-    // Nếu muốn chỉ rõ issuerUri (ví dụ: http://localhost:9000)
-//    @Bean
-//    public JwtDecoder jwtDecoder() {
-//        return JwtDecoders.fromIssuerLocation("http://localhost:9000");
-//    }
+
+    @Bean
+    public JwtDecoder jwtDecoder() {
+        return NimbusJwtDecoder.withJwkSetUri(jwkSetUri).build();
+    }
 }
