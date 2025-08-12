@@ -4,6 +4,7 @@ app:
   kafka:
     metadata-update-topic: metadata-update
     metadata-cleanup-topic: metadata-cleanup
+    delete-metadata-topic: metadata-delete
     metadata-group: metadata-group
   delete:
     document-retention-days: 7
@@ -26,7 +27,7 @@ spring:
       auto-offset-reset: earliest   # earliest = đọc từ đầu nếu chưa có offset, latest = đọc mới nhất
       enable-auto-commit: false     # false = tự xử lý commit offset
       key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
-#      value-deserializer: org.apache.kafka.common.serialization.ByteArrayDeserializer #neu producer gui object thi dung cai nay
+      #      value-deserializer: org.apache.kafka.common.serialization.ByteArrayDeserializer #neu producer gui object thi dung cai nay
       value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer # neu producer gui string json thi dung cai nay
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
       value-serializer: org.springframework.kafka.support.serializer.JsonSerializer

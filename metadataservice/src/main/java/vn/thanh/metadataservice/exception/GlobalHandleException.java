@@ -65,6 +65,17 @@ public class GlobalHandleException extends ResponseEntityExceptionHandler {
         return new ResponseEntity<>(errorResponse, HttpStatus.OK);
     }
 
+    @ExceptionHandler({JsonSerializeException.class})
+    public final ResponseEntity<ErrorResponse> handleBlobStorageException(Exception ex, WebRequest request) {
+        ErrorResponse errorResponse = new ErrorResponse();
+        errorResponse.setTimestamp(LocalDateTime.now());
+        errorResponse.setStatus(HttpStatus.INTERNAL_SERVER_ERROR.value());
+        errorResponse.setError(HttpStatus.INTERNAL_SERVER_ERROR.getReasonPhrase());
+        errorResponse.setMessage(ex.getMessage());
+        errorResponse.setPath(request.getDescription(false));
+        return new ResponseEntity<>(errorResponse, HttpStatus.OK);
+    }
+
     @ExceptionHandler({UploadFailureException.class, PropertyReferenceException.class})
     public final ResponseEntity<ErrorResponse> handleBadRequestException(Exception ex, WebRequest request) {
         ErrorResponse errorResponse = new ErrorResponse();

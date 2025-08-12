@@ -19,5 +19,6 @@ public interface IVersionService {
 
     InputStream downloadMaxVersionByMetadataId(Long metadataId);
 
+    void deleteAllVersionByMetadata(List<Long> metadataIds);
 
 }

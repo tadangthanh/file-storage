@@ -11,6 +11,8 @@ app:
   kafka:
     metadata-update-topic: metadata-update
     metadata-cleanup-topic: metadata-cleanup
+    delete-metadata-topic: metadata-delete
+    storage-group: storage-group
 spring:
   security:
     oauth2:

@@ -3,6 +3,8 @@ package vn.thanh.storageservice.service.impl;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Service;
 import vn.thanh.storageservice.client.MetadataService;
 import vn.thanh.storageservice.dto.UploadSignRequest;
@@ -105,8 +107,18 @@ public class VersionServiceImpl implements IVersionService {
 
     @Override
     public InputStream downloadMaxVersionByMetadataId(Long metadataId) {
-        log.info("download max version by metadata id: {}",metadataId);
+        log.info("download max version by metadata id: {}", metadataId);
         Version version = getVersionMaxByMetadataId(metadataId);
         return azureStorageService.downloadBlobInputStream(version.getBlobName());
+    }
+
+    @KafkaListener(topics = "${app.kafka.delete-metadata-topic}", groupId = "${app.kafka.storage-group}")
+    @Override
+    public void deleteAllVersionByMetadata(List<Long> metadataIds) {
+        log.info("received: delete all version by metadata id: {}", metadataIds.toString());
+        List<Version> versions = versionRepo.findAllByMetadataIds(metadataIds);
+        List<String> blobNames = versions.stream().map(Version::getBlobName).toList();
+        azureStorageService.deleteBLobs(blobNames);
+        versionRepo.deleteAll(versions);
     }
 }

@@ -10,7 +10,7 @@ import java.util.UUID;
 @Getter
 @Setter
 @Entity
-@Table(name = "file")
+@Table(name = "file") // metadata file
 public class File extends BaseEntity {
     private String type;
     private Long size;

@@ -48,7 +48,7 @@ public class CategoryServiceImpl implements ICategoryService {
     public void deleteCategoryById(Long id) {
         categoryValidation.validIsOwnerCategory(id, AuthUtils.getUserId());
         log.info("delete category by id: {}", id);
-        // delete file in category
+        // di chuyển file ra khỏi entity sẽ xóa 
         fileService.detachedCategory(id);
         categoryRepo.deleteById(id);
     }

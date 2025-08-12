@@ -16,11 +16,12 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 @EnableScheduling
 public class StorageserviceApplication {
 
-	public static void main(String[] args) {
-		SpringApplication.run(StorageserviceApplication.class, args);
-	}
-	@Bean
-	JsonMessageConverter converter() {
-		return new JsonMessageConverter();
-	}
+    public static void main(String[] args) {
+        SpringApplication.run(StorageserviceApplication.class, args);
+    }
+
+    @Bean
+    JsonMessageConverter converter() {
+        return new JsonMessageConverter();
+    }
 }

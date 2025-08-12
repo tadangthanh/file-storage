@@ -24,15 +24,15 @@ public class FileRest {
     private final IFileService fileService;
 
     @PostMapping
-    public ResponseData<List<FileResponse>> uploadFileEmptyCategory(@ValidFiles @RequestPart("files") MultipartFile[] files) {
+    public ResponseData<List<FileResponse>> createMetadata(@ValidFiles @RequestPart("files") MultipartFile[] files) {
         List<FileResponse> result = fileService.uploadFile(List.of(files));
-        return new ResponseData<>(201, "Tải lên thành công", result);
+        return new ResponseData<>(201, "Thành công", result);
     }
 
     @PostMapping("/category/{categoryId}")
-    public ResponseData<List<FileResponse>> uploadFileCategory(@PathVariable Long categoryId, @ValidFiles @RequestPart("files") MultipartFile[] files) {
+    public ResponseData<List<FileResponse>> createMetadataCategory(@PathVariable Long categoryId, @ValidFiles @RequestPart("files") MultipartFile[] files) {
         List<FileResponse> result = fileService.uploadFileCategory(categoryId, List.of(files));
-        return new ResponseData<>(201, "Tải lên thành công", result);
+        return new ResponseData<>(201, "Thành công", result);
     }
 
 
