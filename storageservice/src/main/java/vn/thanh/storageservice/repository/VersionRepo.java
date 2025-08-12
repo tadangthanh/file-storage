@@ -21,4 +21,6 @@ public interface VersionRepo extends JpaRepository<Version, Long> {
             @Param("status") VersionStatus status,
             @Param("cutoffTime") Date cutoffTime
     );
+
+    Optional<Version> findFirstByMetadataIdOrderByVersionNumberDesc(Long metadataId);
 }

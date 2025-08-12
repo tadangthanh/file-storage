@@ -11,6 +11,7 @@ import vn.thanh.storageservice.dto.VersionDto;
 import vn.thanh.storageservice.entity.Version;
 import vn.thanh.storageservice.entity.VersionStatus;
 import vn.thanh.storageservice.exception.ResourceAlreadyExistsException;
+import vn.thanh.storageservice.exception.ResourceNotFoundException;
 import vn.thanh.storageservice.mapper.VersionMapper;
 import vn.thanh.storageservice.repository.VersionRepo;
 import vn.thanh.storageservice.service.IAzureStorageService;
@@ -18,6 +19,7 @@ import vn.thanh.storageservice.service.IVersionService;
 import vn.thanh.storageservice.utils.AuthUtils;
 import vn.thanh.storageservice.utils.BlobNameUtil;
 
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -91,5 +93,20 @@ public class VersionServiceImpl implements IVersionService {
             log.info("version not found by id: {}", versionId);
             return new ResourceAlreadyExistsException("Không tìm thấy phiên bản này");
         });
+    }
+
+    @Override
+    public Version getVersionMaxByMetadataId(Long metadataId) {
+        return versionRepo.findFirstByMetadataIdOrderByVersionNumberDesc(metadataId).orElseThrow(() -> {
+            log.info("version not found by metadata id: {}", metadataId);
+            return new ResourceNotFoundException("Tài liệu không tồn tại");
+        });
+    }
+
+    @Override
+    public InputStream downloadMaxVersionByMetadataId(Long metadataId) {
+        log.info("download max version by metadata id: {}",metadataId);
+        Version version = getVersionMaxByMetadataId(metadataId);
+        return azureStorageService.downloadBlobInputStream(version.getBlobName());
     }
 }

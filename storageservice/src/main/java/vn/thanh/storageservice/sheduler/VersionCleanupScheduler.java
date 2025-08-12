@@ -11,8 +11,8 @@ public class VersionCleanupScheduler {
 
     private final VersionCleanupService cleanupService;
 
-    @Scheduled(fixedRate = 60_000) // 1 phút chạy 1 lần
-    public void run() {
-        cleanupService.sendOldUploadingMetadataIds();
-    }
+//    @Scheduled(fixedRate = 60_000) // 1 phút chạy 1 lần
+//    public void run() {
+//        cleanupService.sendOldUploadingMetadataIds();
+//    }
 }
