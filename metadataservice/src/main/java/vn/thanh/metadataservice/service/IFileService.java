@@ -1,17 +1,12 @@
 package vn.thanh.metadataservice.service;
 
 import org.springframework.data.domain.Pageable;
-import org.springframework.web.multipart.MultipartFile;
 import vn.thanh.metadataservice.dto.*;
 
 import java.util.List;
 import java.util.UUID;
 
 public interface IFileService {
-    List<FileResponse> uploadFile(List<MultipartFile> files);
-
-    List<FileResponse> uploadFileCategory(Long categoryId, List<MultipartFile> files);
-
     FileResponse initMetadata(MetadataRequest metadataRequest);
 
     void softDeleteFileById(Long fileId); // xoa tam file

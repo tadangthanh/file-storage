@@ -24,10 +24,10 @@ public class CategoryValidation {
     }
 
     // check category belong to user
-    public void validIsOwnerCategory(Long id, UUID userId) {
-        boolean isExists = categoryRepo.existsByOwnerAndCategoryId(id, userId);
+    public void validIsOwnerCategory(Long categoryId, UUID userId) {
+        boolean isExists = categoryRepo.existsByOwnerAndCategoryId(categoryId, userId);
         if (!isExists) {
-            log.info("user id {} are not owner category {}",userId,id);
+            log.info("user categoryId {} are not owner category {}",userId,categoryId);
             throw new ResourceAlreadyExistsException("Bạn không phải người tạo ra danh mục này");
         }
     }
