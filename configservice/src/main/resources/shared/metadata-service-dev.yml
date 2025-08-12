@@ -2,9 +2,9 @@ server:
   port: 9080
 app:
   kafka:
-    metadata-update-topic: metadata-update
-    metadata-cleanup-topic: metadata-cleanup
-    delete-metadata-topic: metadata-delete
+    metadata-update-topic: metadata.update
+    metadata-cleanup-topic: metadata.cleanup
+    delete-metadata-topic: metadata.delete
     metadata-group: metadata-group
   delete:
     document-retention-days: 7
