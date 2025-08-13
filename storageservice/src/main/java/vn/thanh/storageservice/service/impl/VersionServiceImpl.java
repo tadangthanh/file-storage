@@ -3,10 +3,10 @@ package vn.thanh.storageservice.service.impl;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Service;
 import vn.thanh.storageservice.client.MetadataService;
+import vn.thanh.storageservice.dto.DeleteBlobsResult;
 import vn.thanh.storageservice.dto.UploadSignRequest;
 import vn.thanh.storageservice.dto.UploadUrlResponse;
 import vn.thanh.storageservice.dto.VersionDto;
@@ -17,6 +17,7 @@ import vn.thanh.storageservice.exception.ResourceNotFoundException;
 import vn.thanh.storageservice.mapper.VersionMapper;
 import vn.thanh.storageservice.repository.VersionRepo;
 import vn.thanh.storageservice.service.IAzureStorageService;
+import vn.thanh.storageservice.service.IOutboxService;
 import vn.thanh.storageservice.service.IVersionService;
 import vn.thanh.storageservice.utils.AuthUtils;
 import vn.thanh.storageservice.utils.BlobNameUtil;
@@ -24,6 +25,7 @@ import vn.thanh.storageservice.utils.BlobNameUtil;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @RequiredArgsConstructor
@@ -35,6 +37,7 @@ public class VersionServiceImpl implements IVersionService {
     private final IAzureStorageService azureStorageService;
     private final MetadataService metadataService;
     private final VersionMapper versionMapper;
+    private final IOutboxService outboxService;
 
     @Override
     // hàm upload tài liệu mới (tài liệu chưa tồn tại version nào )
@@ -112,13 +115,25 @@ public class VersionServiceImpl implements IVersionService {
         return azureStorageService.downloadBlobInputStream(version.getBlobName());
     }
 
-    @KafkaListener(topics = "${app.kafka.delete-metadata-topic}", groupId = "${app.kafka.storage-group}")
+    @KafkaListener(topics = "${app.kafka.metadata-delete-topic}", groupId = "${app.kafka.storage-group}")
     @Override
     public void deleteAllVersionByMetadata(List<Long> metadataIds) {
         log.info("received: delete all version by metadata id: {}", metadataIds.toString());
         List<Version> versions = versionRepo.findAllByMetadataIds(metadataIds);
-        List<String> blobNames = versions.stream().map(Version::getBlobName).toList();
-        azureStorageService.deleteBLobs(blobNames);
+        Map<Long, String> metadataBlob = versions.stream()
+                .collect(Collectors.toMap(
+                        Version::getMetadataId, // key
+                        Version::getBlobName    // value
+                ));
+        DeleteBlobsResult result = azureStorageService.deleteBlobs(metadataBlob);
+        // nếu 1 metadata xóa file thất bại thì sẽ gửi lại metadata đó về metadata service để đánh dấu status là DELETE_FAILD
+        // nếu 1 metadata đã xóa thành công thì sẽ gửi lại id về cho metadata service để xóa vĩnh viễn luôn
+        if (!result.getFailedMetadataIds().isEmpty()) {
+            outboxService.addBlobDeleteFailEvent(result.getFailedMetadataIds());
+        }
+        if (!result.getSuccessMetadataIds().isEmpty()) {
+            outboxService.addBlobDeleteSuccessEvent(result.getSuccessMetadataIds());
+        }
         versionRepo.deleteAll(versions);
     }
 }

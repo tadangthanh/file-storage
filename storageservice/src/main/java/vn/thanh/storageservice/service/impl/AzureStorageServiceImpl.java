@@ -12,6 +12,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import vn.thanh.storageservice.dto.DeleteBlobsResult;
 import vn.thanh.storageservice.exception.CustomBlobStorageException;
 import vn.thanh.storageservice.exception.ResourceNotFoundException;
 import vn.thanh.storageservice.service.IAzureStorageService;
@@ -22,10 +23,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.time.OffsetDateTime;
-import java.util.ArrayList;
-import java.util.Base64;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -154,53 +152,80 @@ public class AzureStorageServiceImpl implements IAzureStorageService {
         }
     }
 
+    /**
+     *
+     * @param metadataBlobMap: list blob delete, key is metadata id, value is blob name belong metadata id
+     * @return: DeleteBlobsResult object chứa danh sách metadata id xóa thành công và thất bại
+     */
     @Override
-    public void deleteBLobs(List<String> blobNames) {
-        if (blobNames == null || blobNames.isEmpty()) {
+    public DeleteBlobsResult deleteBlobs(Map<Long, String> metadataBlobMap) {
+        if (metadataBlobMap == null || metadataBlobMap.isEmpty()) {
             log.warn("No blobs to delete");
-            return;
+            return new DeleteBlobsResult(Collections.emptyList(), Collections.emptyList());
         }
 
-        log.info("Deleting {} blobs (parallel)...", blobNames.size());
+        log.info("Deleting {} blobs (parallel)...", metadataBlobMap.size());
 
         ExecutorService executor = Executors.newFixedThreadPool(THREAD_COUNT);
-        List<Future<?>> futures = new ArrayList<>();
+        List<Future<Map.Entry<Long, Boolean>>> futures = new ArrayList<>();
 
-        for (String blobName : blobNames) {
-            futures.add(executor.submit(() -> deleteWithRetry(blobName)));
+        for (Map.Entry<Long, String> entry : metadataBlobMap.entrySet()) {
+            Long metadataId = entry.getKey();
+            String blobName = entry.getValue();
+
+            futures.add(executor.submit(() -> {
+                boolean success = deleteWithRetry(blobName);
+                return Map.entry(metadataId, success);
+            }));
         }
 
-        // Chờ tất cả task hoàn tất
-        for (Future<?> future : futures) {
+        List<Long> successMetadataIds = new ArrayList<>();
+        List<Long> failedMetadataIds = new ArrayList<>();
+
+        for (Future<Map.Entry<Long, Boolean>> future : futures) {
             try {
-                future.get(); // block và bắt lỗi nếu có
+                Map.Entry<Long, Boolean> result = future.get();
+                if (Boolean.TRUE.equals(result.getValue())) {
+                    successMetadataIds.add(result.getKey());
+                } else {
+                    failedMetadataIds.add(result.getKey());
+                }
             } catch (Exception e) {
                 log.error("Error while deleting blob in parallel task", e);
+                // Nếu future lỗi, coi là fail
+                failedMetadataIds.add(-1L); // hoặc có thể bỏ qua
             }
         }
 
         executor.shutdown();
-        log.info("Blob deletion completed.");
+        log.info("Blob deletion completed. Success: {}, Fail: {}",
+                successMetadataIds.size(), failedMetadataIds.size());
+
+        return new DeleteBlobsResult(successMetadataIds, failedMetadataIds);
     }
 
-    private void deleteWithRetry(String blobName) {
-        for (int attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+
+    public boolean deleteWithRetry(String blobName) {
+        int maxRetries = 3;
+        int retryCount = 0;
+        while (retryCount < maxRetries) {
             try {
-                deleteBlobByContainerAndBlob(containerNameDefault, blobName);
-                log.debug("Deleted blob: {}", blobName);
-                return;
+                // Giả sử gọi hàm xóa thực tế
+                deleteBlob(blobName);  // nếu thành công sẽ không ném exception
+                return true;           // xóa thành công
             } catch (Exception e) {
-                log.warn("Failed to delete blob '{}', attempt {}/{}", blobName, attempt, MAX_RETRIES, e);
-                if (attempt == MAX_RETRIES) {
-                    log.error("Giving up on deleting blob: {}", blobName);
-                } else {
-                    try {
-                        Thread.sleep(500L * attempt); // delay tăng dần
-                    } catch (InterruptedException ignored) {
-                    }
+                retryCount++;
+                log.warn("Failed to delete blob {}, retry {}/{}", blobName, retryCount, maxRetries);
+                try {
+                    Thread.sleep(1000); // delay trước khi retry (tuỳ chọn)
+                } catch (InterruptedException ie) {
+                    Thread.currentThread().interrupt();
+                    break;
                 }
             }
         }
+        log.error("Failed to delete blob {} after {} retries", blobName, maxRetries);
+        return false;  // xóa không thành công
     }
 
 

@@ -7,9 +7,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.kafka.annotation.DltHandler;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.kafka.annotation.RetryableTopic;
-import org.springframework.kafka.support.KafkaHeaders;
-import org.springframework.messaging.handler.annotation.Header;
-import org.springframework.messaging.handler.annotation.Headers;
 import org.springframework.retry.annotation.Backoff;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -17,6 +14,7 @@ import vn.thanh.metadataservice.dto.MetadataRequest;
 import vn.thanh.metadataservice.dto.MetadataUpdate;
 import vn.thanh.metadataservice.entity.Category;
 import vn.thanh.metadataservice.entity.File;
+import vn.thanh.metadataservice.entity.Status;
 import vn.thanh.metadataservice.exception.BadRequestException;
 import vn.thanh.metadataservice.exception.ResourceNotFoundException;
 import vn.thanh.metadataservice.mapper.FileMapper;
@@ -28,7 +26,6 @@ import vn.thanh.metadataservice.utils.AuthUtils;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 
 @Service
@@ -149,11 +146,14 @@ public class MetadataStorageServiceImpl implements IMetadataStorageService {
     }
 
     @Override
-    public void hardDeleteFile(Long fileId) {
-        log.info("hard delete file with id {}", fileId);
-        File file = getFileByIdOrThrow(fileId);
-        fileRepo.delete(file);
-        // send kafka
+    public void setStatusFile(List<Long> fileIds,Status status) {
+        log.info("set status {} file list id {}", status, fileIds);
+        fileRepo.updateStatusByIds(fileIds, status);
+    }
+
+    @Override
+    public void permanentlyDelete(List<Long> fileIds) {
+        fileRepo.deleteAllById(fileIds);
     }
 
     @Override
@@ -186,7 +186,7 @@ public class MetadataStorageServiceImpl implements IMetadataStorageService {
 
     @DltHandler
     public void dltHandler(MetadataUpdate metadataUpdate) {
-        System.out.println("--------Message: "+metadataUpdate.toString());
+        System.out.println("--------Message: " + metadataUpdate.toString());
     }
 
     @KafkaListener(topics = "${app.kafka.metadata-cleanup-topic}", groupId = "${app.kafka.metadata-group}")

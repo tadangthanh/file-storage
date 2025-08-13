@@ -4,6 +4,7 @@ package vn.thanh.metadataservice.service;
 import org.springframework.web.multipart.MultipartFile;
 import vn.thanh.metadataservice.dto.MetadataRequest;
 import vn.thanh.metadataservice.entity.File;
+import vn.thanh.metadataservice.entity.Status;
 
 import java.util.List;
 
@@ -19,7 +20,9 @@ public interface IMetadataStorageService {
 
     void softDeleteFile(Long fileId);
 
-    void hardDeleteFile(Long fileId);
+    void setStatusFile(List<Long> fileIds, Status status);
+
+    void permanentlyDelete(List<Long> fileIds);
 
     void detachedCategory(Long categoryId);
 }

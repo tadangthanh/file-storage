@@ -26,6 +26,10 @@ public class OutboxServiceImpl implements IOutboxService {
     private String metadataUpdateTopic;
     @Value("${app.kafka.metadata-cleanup-topic}")
     private String metadataCleanupTopic;
+    @Value("${app.kafka.blob-delete-fail-topic}")
+    private String blobDeleteFailTopic;
+    @Value("${app.kafka.blob-delete-success-topic}")
+    private String blobDeleteSuccessTopic;
 
     @Override
     @Transactional
@@ -50,6 +54,38 @@ public class OutboxServiceImpl implements IOutboxService {
             String payload = objectMapper.writeValueAsString(metadataIds);
             OutboxEvent event = OutboxEvent.builder()
                     .topic(metadataCleanupTopic)
+                    .payload(payload)
+                    .status(OutboxEventStatus.PENDING)
+                    .retryCount(0)
+                    .build();
+            outboxEventRepository.save(event);
+        } catch (JsonProcessingException e) {
+            throw new JsonSerializeException("Lỗi serialize event");
+        }
+    }
+
+    @Override
+    public void addBlobDeleteFailEvent(List<Long> metadataIds) {
+        try {
+            String payload = objectMapper.writeValueAsString(metadataIds);
+            OutboxEvent event = OutboxEvent.builder()
+                    .topic(blobDeleteFailTopic)
+                    .payload(payload)
+                    .status(OutboxEventStatus.PENDING)
+                    .retryCount(0)
+                    .build();
+            outboxEventRepository.save(event);
+        } catch (JsonProcessingException e) {
+            throw new JsonSerializeException("Lỗi serialize event");
+        }
+    }
+
+    @Override
+    public void addBlobDeleteSuccessEvent(List<Long> metadataIds) {
+        try {
+            String payload = objectMapper.writeValueAsString(metadataIds);
+            OutboxEvent event = OutboxEvent.builder()
+                    .topic(blobDeleteSuccessTopic)
                     .payload(payload)
                     .status(OutboxEventStatus.PENDING)
                     .retryCount(0)

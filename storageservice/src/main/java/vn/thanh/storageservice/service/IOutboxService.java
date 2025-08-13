@@ -8,4 +8,8 @@ public interface IOutboxService {
     void addUpdateMetadataEvent(MetadataUpdate update);
 
     void addMetadataCleanUpEvent(List<Long> metadataIds);
+
+    void addBlobDeleteFailEvent(List<Long> metadataIds);
+
+    void addBlobDeleteSuccessEvent(List<Long> metadataIds);
 }
