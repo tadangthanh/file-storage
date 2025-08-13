@@ -6,10 +6,12 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Service;
 import vn.thanh.metadataservice.dto.*;
 import vn.thanh.metadataservice.entity.Category;
 import vn.thanh.metadataservice.entity.File;
+import vn.thanh.metadataservice.entity.Status;
 import vn.thanh.metadataservice.exception.AccessDeniedException;
 import vn.thanh.metadataservice.exception.ResourceNotFoundException;
 import vn.thanh.metadataservice.mapper.FileMapper;
@@ -143,9 +145,23 @@ public class FileServiceImpl implements IFileService {
     @Override
     public void hardDeleteFile(Long fileId) {
         // check permission
-        metadataStorageService.hardDeleteFile(fileId);
+        metadataStorageService.setStatusFile(List.of(fileId), Status.DELETING);
+        // send event to storage service delete blob
         outboxService.addDeleteMetadataEvent(List.of(fileId));
     }
+
+    @KafkaListener(topics = "${app.kafka.blob-delete-success-topic}", groupId = "${app.kafka.metadata-group}")
+    public void deleteMetadata(List<Long> metadataIds) {
+        log.info("received: delete all metadata id: {}", metadataIds.toString());
+        metadataStorageService.permanentlyDelete(metadataIds);
+    }
+
+    @KafkaListener(topics = "${app.kafka.blob-delete-fail-topic}", groupId = "${app.kafka.metadata-group}")
+    public void restoreMetadata(List<Long> metadataIds) {
+        log.info("received: restore delete all metadata id: {}", metadataIds.toString());
+        metadataStorageService.setStatusFile(metadataIds, Status.DELETE_FAILED);
+    }
+
 
     @Override
     public void detachedCategory(Long categoryId) {

@@ -21,7 +21,7 @@ import java.util.List;
 public class OutboxServiceImpl implements IOutboxService {
     private final OutboxEventRepository outboxEventRepository;
     private final ObjectMapper objectMapper;
-    @Value("${app.kafka.delete-metadata-topic}")
+    @Value("${app.kafka.metadata-delete-topic}")
     private String metadataDeleteTopic;
 
 

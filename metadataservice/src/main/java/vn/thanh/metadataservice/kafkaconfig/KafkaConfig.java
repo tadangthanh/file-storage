@@ -16,7 +16,7 @@ public class KafkaConfig {
     private String metadataUpdateTopic;
     @Value("${app.kafka.metadata-cleanup-topic}")
     private String metadataCleanupTopic;
-    @Value("${app.kafka.delete-metadata-topic}")
+    @Value("${app.kafka.metadata-delete-topic}")
     private String metadataDeleteTopic;
 
     @Bean

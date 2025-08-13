@@ -15,7 +15,7 @@ public class File extends BaseEntity {
     private String type;
     private Long size;
     private String name;
-    @Column(name = "owner_id",nullable = false)
+    @Column(name = "owner_id", nullable = false)
     private UUID ownerId;
     private LocalDateTime deletedAt;
     @Column(name = "permanent_delete_at")
@@ -24,4 +24,6 @@ public class File extends BaseEntity {
     @JoinColumn(name = "category_id")
     private Category category;
     private Long currentVersionId;
+    @Enumerated(value = EnumType.STRING)
+    private Status status;
 }

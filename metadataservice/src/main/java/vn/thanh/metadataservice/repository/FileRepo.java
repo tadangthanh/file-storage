@@ -2,10 +2,12 @@ package vn.thanh.metadataservice.repository;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import vn.thanh.metadataservice.entity.File;
+import vn.thanh.metadataservice.entity.Status;
 
 import java.util.List;
 import java.util.UUID;
@@ -25,4 +27,8 @@ public interface FileRepo extends JpaRepository<File, Long>, JpaSpecificationExe
 
     @Query("SELECT COUNT(f) FROM File f WHERE f.id IN :fileIds")
     long countFilesByIds(@Param("fileIds") List<Long> fileIds);
+
+    @Modifying
+    @Query("UPDATE File f SET f.status = :status WHERE f.id IN :ids")
+    int updateStatusByIds(@Param("ids") List<Long> ids, @Param("status") Status status);
 }
