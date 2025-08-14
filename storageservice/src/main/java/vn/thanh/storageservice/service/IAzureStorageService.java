@@ -4,6 +4,7 @@ import vn.thanh.storageservice.dto.DeleteBlobsResult;
 
 import java.io.File;
 import java.io.InputStream;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
@@ -16,7 +17,7 @@ public interface IAzureStorageService {
 
     void deleteBlob(String blobName);
 
-    DeleteBlobsResult deleteBlobs(Map<Long, String> metadataBlobMap);
+    DeleteBlobsResult deleteBlobs(Map<Long, List<String>> metadataToBlobs);
 
     InputStream downloadBlobInputStream(String blobName); // Tải blob về
 

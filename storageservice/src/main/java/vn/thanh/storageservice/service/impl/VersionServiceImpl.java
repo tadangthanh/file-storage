@@ -115,25 +115,38 @@ public class VersionServiceImpl implements IVersionService {
         return azureStorageService.downloadBlobInputStream(version.getBlobName());
     }
 
+    /***
+     *
+     * @param metadataIds: danh sách metadata id để xóa blob trên azure
+     */
     @KafkaListener(topics = "${app.kafka.metadata-delete-topic}", groupId = "${app.kafka.storage-group}")
     @Override
     public void deleteAllVersionByMetadata(List<Long> metadataIds) {
         log.info("received: delete all version by metadata id: {}", metadataIds.toString());
         List<Version> versions = versionRepo.findAllByMetadataIds(metadataIds);
-        Map<Long, String> metadataBlob = versions.stream()
-                .collect(Collectors.toMap(
-                        Version::getMetadataId, // key
-                        Version::getBlobName    // value
+        // tạo 1 map với key là metadata id và value là blob name
+        Map<Long, List<String>> metadataToBlobs = versions.stream()
+                .collect(Collectors.groupingBy(
+                        Version::getMetadataId,
+                        Collectors.mapping(Version::getBlobName, Collectors.toList())
                 ));
-        DeleteBlobsResult result = azureStorageService.deleteBlobs(metadataBlob);
-        // nếu 1 metadata xóa file thất bại thì sẽ gửi lại metadata đó về metadata service để đánh dấu status là DELETE_FAILD
-        // nếu 1 metadata đã xóa thành công thì sẽ gửi lại id về cho metadata service để xóa vĩnh viễn luôn
+        // đối tượng trả về chứa danh sách các id metadata đã xóa blob thành công và thất bại
+        DeleteBlobsResult result = azureStorageService.deleteBlobs(metadataToBlobs);
+        log.info("Deleted {} blobs successfully, {} blobs failed",
+                result.getSuccessMetadataIds().size(),
+                result.getFailedMetadataIds().size());
         if (!result.getFailedMetadataIds().isEmpty()) {
+            // nếu 1 metadata xóa file thất bại thì sẽ gửi lại metadata đó về metadata service để đánh dấu status là DELETE_FAILD
             outboxService.addBlobDeleteFailEvent(result.getFailedMetadataIds());
         }
         if (!result.getSuccessMetadataIds().isEmpty()) {
+            // nếu 1 metadata đã xóa thành công thì sẽ gửi lại id về cho metadata service để xóa vĩnh viễn luôn
             outboxService.addBlobDeleteSuccessEvent(result.getSuccessMetadataIds());
         }
-        versionRepo.deleteAll(versions);
+        List<Version> successVersions = versions.stream()
+                .filter(v -> result.getSuccessMetadataIds().contains(v.getMetadataId()))
+                .toList();
+
+        versionRepo.deleteAll(successVersions);
     }
 }

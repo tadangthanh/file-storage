@@ -25,5 +25,7 @@ public class File extends BaseEntity {
     private Category category;
     private Long currentVersionId;
     @Enumerated(value = EnumType.STRING)
-    private Status status;
+    private Status status; // trạng thái file
+    private int retryCount; // số lần thử xóa
+    private LocalDateTime lastRetryTime; // lần xóa cuối cùng
 }

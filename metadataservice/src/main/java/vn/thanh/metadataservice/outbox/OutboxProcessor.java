@@ -26,6 +26,7 @@ public class OutboxProcessor {
 
     @Scheduled(fixedDelay = 5000) // 5 giay
     @Transactional
+    // sau mỗi 5 giây là lấy event dưới csdl để gửi lên kafka
     public void processOutbox() {
         List<OutboxEvent> events = outboxEventRepository.findEventsToSend(5, 50);
         for (OutboxEvent event : events) {
