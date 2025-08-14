@@ -96,7 +96,7 @@ public class VersionServiceImpl implements IVersionService {
     public Version getVersionOrThrow(Long versionId) {
         return versionRepo.findById(versionId).orElseThrow(() -> {
             log.info("version not found by id: {}", versionId);
-            return new ResourceAlreadyExistsException("Không tìm thấy phiên bản này");
+            return new ResourceNotFoundException("Không tìm thấy phiên bản này");
         });
     }
 
