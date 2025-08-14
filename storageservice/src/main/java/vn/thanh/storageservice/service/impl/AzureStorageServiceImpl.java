@@ -158,24 +158,30 @@ public class AzureStorageServiceImpl implements IAzureStorageService {
      * @return: DeleteBlobsResult object chứa danh sách metadata id xóa thành công và thất bại
      */
     @Override
-    public DeleteBlobsResult deleteBlobs(Map<Long, String> metadataBlobMap) {
+    public DeleteBlobsResult deleteBlobs(Map<Long, List<String>> metadataBlobMap) {
         if (metadataBlobMap == null || metadataBlobMap.isEmpty()) {
             log.warn("No blobs to delete");
             return new DeleteBlobsResult(Collections.emptyList(), Collections.emptyList());
         }
 
-        log.info("Deleting {} blobs (parallel)...", metadataBlobMap.size());
+        log.info("Deleting blobs for {} metadata IDs (parallel)...", metadataBlobMap.size());
 
         ExecutorService executor = Executors.newFixedThreadPool(THREAD_COUNT);
         List<Future<Map.Entry<Long, Boolean>>> futures = new ArrayList<>();
 
-        for (Map.Entry<Long, String> entry : metadataBlobMap.entrySet()) {
+        for (Map.Entry<Long, List<String>> entry : metadataBlobMap.entrySet()) {
             Long metadataId = entry.getKey();
-            String blobName = entry.getValue();
+            List<String> blobNames = entry.getValue();
 
             futures.add(executor.submit(() -> {
-                boolean success = deleteWithRetry(blobName);
-                return Map.entry(metadataId, success);
+                boolean allSuccess = true;
+                for (String blobName : blobNames) {
+                    boolean success = deleteWithRetry(blobName);
+                    if (!success) {
+                        allSuccess = false; // chỉ cần 1 blob fail là fail cả metadata
+                    }
+                }
+                return Map.entry(metadataId, allSuccess);
             }));
         }
 
@@ -191,18 +197,18 @@ public class AzureStorageServiceImpl implements IAzureStorageService {
                     failedMetadataIds.add(result.getKey());
                 }
             } catch (Exception e) {
-                log.error("Error while deleting blob in parallel task", e);
-                // Nếu future lỗi, coi là fail
-                failedMetadataIds.add(-1L); // hoặc có thể bỏ qua
+                log.error("Error while deleting blobs for a metadata in parallel task", e);
+                failedMetadataIds.add(-1L); // hoặc lưu metadataId thực tế nếu biết
             }
         }
 
         executor.shutdown();
-        log.info("Blob deletion completed. Success: {}, Fail: {}",
+        log.info("Blob deletion completed. Success metadata IDs: {}, Fail metadata IDs: {}",
                 successMetadataIds.size(), failedMetadataIds.size());
 
         return new DeleteBlobsResult(successMetadataIds, failedMetadataIds);
     }
+
 
 
     public boolean deleteWithRetry(String blobName) {

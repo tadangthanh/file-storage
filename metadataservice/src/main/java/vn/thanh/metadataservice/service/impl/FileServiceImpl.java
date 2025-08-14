@@ -146,19 +146,30 @@ public class FileServiceImpl implements IFileService {
     public void hardDeleteFile(Long fileId) {
         // check permission
         metadataStorageService.setStatusFile(List.of(fileId), Status.DELETING);
-        // send event to storage service delete blob
+        // thêm event vào outbox, outbox tự chạy schedule mỗi 5 giây gửi event lên kafka
         outboxService.addDeleteMetadataEvent(List.of(fileId));
     }
 
+    /***
+     *
+     * @param metadataIds: danh sách metadata đã xóa blob trên azure thành công
+     */
     @KafkaListener(topics = "${app.kafka.blob-delete-success-topic}", groupId = "${app.kafka.metadata-group}")
     public void deleteMetadata(List<Long> metadataIds) {
         log.info("received: delete all metadata id: {}", metadataIds.toString());
+        //xóa vĩnh viễn các metadata đó,
+        //Có thể dùng soft delete flag + batch job clean-up cho an toàn.
         metadataStorageService.permanentlyDelete(metadataIds);
     }
 
+    /***
+     *
+     * @param metadataIds: danh sách metadata chưa xóa được blob trên azure
+     */
     @KafkaListener(topics = "${app.kafka.blob-delete-fail-topic}", groupId = "${app.kafka.metadata-group}")
     public void restoreMetadata(List<Long> metadataIds) {
         log.info("received: restore delete all metadata id: {}", metadataIds.toString());
+        // đặt trạng thái là delete_fail để xử lý sau
         metadataStorageService.setStatusFile(metadataIds, Status.DELETE_FAILED);
     }
 
