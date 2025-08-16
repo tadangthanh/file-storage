@@ -12,9 +12,10 @@ app:
     metadata-update-topic: metadata.update
     metadata-cleanup-topic: metadata.cleanup
     metadata-delete-topic: metadata.delete
+    metadata-create-topic: metadata.create
     blob-delete-success-topic: blob.delete.success
     blob-delete-fail-topic: blob.delete.fail
-    storage-group: storage-group
+    permission-group: permission-group
 spring:
   security:
     oauth2:

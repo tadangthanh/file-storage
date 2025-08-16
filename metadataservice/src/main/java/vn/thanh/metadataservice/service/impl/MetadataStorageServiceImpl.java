@@ -166,6 +166,10 @@ public class MetadataStorageServiceImpl implements IMetadataStorageService {
         fileRepo.saveAll(files);
     }
 
+    /***
+     *
+     * @param metadataUpdate: tài liệu đã tải thành công lên azure blob storage
+     */
     @RetryableTopic(
             attempts = "3", // Tổng số lần thử = 3 (lần gốc + 2 lần retry)
             backoff = @Backoff(delay = 1000, multiplier = 1.0),

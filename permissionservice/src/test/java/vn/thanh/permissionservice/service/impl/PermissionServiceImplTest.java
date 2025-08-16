@@ -28,8 +28,11 @@ public class PermissionServiceImplTest {
     PermissionMapper permissionMapper;
     @Mock
     PermissionRepo permissionRepo;
+    @Mock
+    DocumentCategoryMapServiceImpl documentCategoryMapService;
     @InjectMocks
     private PermissionServiceImpl permissionService;
+
 
     @Test
     void assignPermission() {
@@ -166,20 +169,26 @@ public class PermissionServiceImplTest {
         request.setPermissionBit(1); // READ
         request.setResourceId(1L);
         request.setUserId(userId);
-        request.setResourceType(ResourceType.CATEGORY);
+        request.setResourceType(ResourceType.DOCUMENT);
 
+        Long categoryId = 5L;
 
         Permission existing = new Permission();
         existing.setId(1L);
         existing.setUserId(userId);
-        existing.setResourceId(1L);
+        existing.setResourceId(categoryId);
         existing.setResourceType(ResourceType.CATEGORY);
         existing.setAllowMask(1);
 
-        given(permissionRepo.findByUserIdAndResourceTypeAndResourceId(userId, request.getResourceType(), request.getResourceId())).willReturn(Optional.of(existing));
+
+        given(permissionRepo.findByUserIdAndResourceTypeAndResourceId(userId, request.getResourceType(), request.getResourceId())).willReturn(Optional.empty());
+        given(documentCategoryMapService.getCategoryByDocumentId(request.getResourceId())).willReturn(categoryId);
+        given(permissionRepo.findByUserIdAndResourceTypeAndResourceId(userId, ResourceType.CATEGORY, categoryId)).willReturn(Optional.of(existing));
         Boolean hasPermission = permissionService.hasPermission(request);
 
         Assertions.assertEquals(true, hasPermission);
 
     }
+
+
 }
