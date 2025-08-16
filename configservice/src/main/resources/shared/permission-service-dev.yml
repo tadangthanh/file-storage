@@ -1,0 +1,105 @@
+server:
+  port: 9082
+  tomcat:
+    uri-encoding: UTF-8
+  servlet:
+    encoding:
+      enabled: true
+      charset: UTF-8
+      force: true
+app:
+  kafka:
+    metadata-update-topic: metadata.update
+    metadata-cleanup-topic: metadata.cleanup
+    metadata-delete-topic: metadata.delete
+    blob-delete-success-topic: blob.delete.success
+    blob-delete-fail-topic: blob.delete.fail
+    storage-group: storage-group
+spring:
+  security:
+    oauth2:
+      client:
+        registration:
+          metadata-service:
+            authorization-grant-type: client_credentials
+            client-id: permission-service
+            client-secret: ${permission-service-client-secret}
+            scope: read
+            provider: springkeycloak
+        provider:
+          springkeycloak:
+            issuer-uri: ${KEYCLOAK_ISSUER_URI:http://localhost:9000/realms/documentstorage}
+  #data source
+  datasource:
+    url: jdbc:mysql://${MYSQL_HOST:localhost}:${MYSQL_PORT:3306}/permissionservice?createDatabaseIfNotExist=true&useUnicode=yes&characterEncoding=UTF-8&useSSL=false&allowPublicKeyRetrieval=true
+    username: ${MYSQL_USER:root}
+    password: ${MYSQL_PASSWORD:123456}
+  jpa:
+    #    show-sql: true
+    hibernate:
+      ddl-auto: update
+    generate-ddl: false
+    database-platform: org.hibernate.dialect.MySQL8Dialect
+  cloud:
+    azure:
+      storage:
+        blob:
+          container-name: luu-tru-tai-lieu
+      key-vault:
+        secret:
+          property-source-enabled: true
+          property-sources:
+            - endpoint: https://luutrutailieukeyvault.vault.azure.net/
+              retry:
+                mode: exponential
+                exponential:
+                  max-retries: 4
+                  base-delay: PT0.0801S
+                  max-delay: PT9S
+  kafka:
+    bootstrap-servers: localhost:9092,localhost:9093,localhost:9094 #địa chỉ Kafka broker.
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      #      value-deserializer: org.apache.kafka.common.serialization.ByteArrayDeserializer #neu producer gui object thi dung cai nay
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer # neu producer gui string json thi dung cai nay
+      #0: khi để 0, service này gửi event lên kafka server, thì nó sẽ k quan tâm event có lưu THÀNH CÔNG vào kafka server hay k mà xác minh luôn đã gửi thành công
+      #1: lưu thành công vào leader nhưng k đợi lưu vào follower, trường hợp vừa lưu vào leader thì leader sập sẽ bị mất event
+      #-1: event phải lưu thành công vào leader và follower
+      acks: -1
+      retries: 1 # số lần gửi lại khi acks bị fail
+      properties:
+        enable.idempotence: true # Tránh gửi trùng message khi retry
+        max.in.flight.request.per.connection: 5 #số lượng request trên 1 connection <=5 mới chống gửi trùng
+        spring.json.trusted.packages: "vn.thanh.permissionservice.dto"    # hoặc "*" (unsafe)
+    #        request.timeout.ms: 1 # 1 milisecond nếu k nhận dc repsonse phản hồi từ kafka thì xem như event gửi fail
+    consumer:
+      bootstrap-servers: localhost:9092,localhost:9093,localhost:9094
+      group-id: storage-group   # Tên nhóm consumer
+      auto-offset-reset: earliest   # earliest = đọc từ đầu nếu chưa có offset, latest = đọc mới nhất
+      enable-auto-commit: false     # false = tự xử lý commit offset
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      max-poll-records: 500         # Số lượng record tối đa mỗi lần poll
+      properties:
+        enable.idempotence: true # Tránh gửi trùng message khi retry
+        max.in.flight.request.per.connection: 5 #số lượng request trên 1 connection <=5 mới chống gửi trùng
+        spring.json.trusted.packages: "vn.thanh.permissionservice.dto"    # hoặc "*" (unsafe)
+
+resilience4j:
+  circuitbreaker:
+    instances:
+      metadataService:
+        register-health-indicator: true
+        sliding-window-type: COUNT_BASED
+        sliding-window-size: 10           # Xét trên 10 request gần nhất
+        failure-rate-threshold: 50        # Nếu 50% request fail -> mở circuit
+        wait-duration-in-open-state: 5s   # Thời gian chờ trước khi thử lại (half-open)
+        permitted-number-of-calls-in-half-open-state: 3
+        automatic-transition-from-open-to-half-open-enabled: true
+        minimum-number-of-calls: 5        # Cần tối thiểu 5 request trước khi tính tỷ lệ fail
+  timelimiter:
+    instances:
+      metadataService:
+        timeout-duration: 2s              # Timeout cho mỗi request
