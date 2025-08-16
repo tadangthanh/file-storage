@@ -7,6 +7,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import vn.thanh.metadataservice.dto.MetadataCreateMessage;
 import vn.thanh.metadataservice.entity.OutboxEvent;
 import vn.thanh.metadataservice.entity.OutboxEventStatus;
 import vn.thanh.metadataservice.exception.JsonSerializeException;
@@ -23,6 +24,8 @@ public class OutboxServiceImpl implements IOutboxService {
     private final ObjectMapper objectMapper;
     @Value("${app.kafka.metadata-delete-topic}")
     private String metadataDeleteTopic;
+    @Value("${app.kafka.metadata-create-topic}")
+    private String metadataCreateTopic;
 
 
     @Override
@@ -33,6 +36,23 @@ public class OutboxServiceImpl implements IOutboxService {
             String payload = objectMapper.writeValueAsString(metadataIds);
             OutboxEvent event = OutboxEvent.builder()
                     .topic(metadataDeleteTopic)
+                    .payload(payload)
+                    .status(OutboxEventStatus.PENDING)
+                    .retryCount(0)
+                    .build();
+            outboxEventRepository.save(event);
+        } catch (JsonProcessingException e) {
+            throw new JsonSerializeException("Lỗi serialize event");
+        }
+    }
+
+    @Override
+    public void addCreateMetadataEvent(MetadataCreateMessage message) {
+        log.info("add metadata delete event to outbox");
+        try {
+            String payload = objectMapper.writeValueAsString(message);
+            OutboxEvent event = OutboxEvent.builder()
+                    .topic(metadataCreateTopic)
                     .payload(payload)
                     .status(OutboxEventStatus.PENDING)
                     .retryCount(0)

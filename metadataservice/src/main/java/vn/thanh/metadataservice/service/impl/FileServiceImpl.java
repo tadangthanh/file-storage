@@ -45,6 +45,10 @@ public class FileServiceImpl implements IFileService {
     public FileResponse initMetadata(MetadataRequest metadataRequest) {
         log.info("init metadata");
         File file = metadataStorageService.initMetadata(metadataRequest);
+        // gửi kafka tới permission service để lưu document-category-map
+        if(metadataRequest.getCategoryId()!=null){
+            outboxService.addCreateMetadataEvent(new MetadataCreateMessage(file.getId(),metadataRequest.getCategoryId()));
+        }
         return fileMapper.toResponse(file);
     }
 

@@ -14,5 +14,7 @@ public interface IPermissionService {
 
     Permission getPermissionById(Long id);
 
+    void deletePermissionById(Long permissionId);
+
     PermissionDto toDto(Permission permission);
 }
