@@ -1,12 +1,16 @@
 package vn.thanh.metadataservice.dto;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 @Getter
+@NoArgsConstructor // cho Jackson deserialize
+@AllArgsConstructor // nếu muốn xài constructor full
 public class ResponseData<T> {
-    private final int status;
-    private final String message;
+    private int status;
+    private String message;
     @JsonInclude(JsonInclude.Include.NON_NULL)
     private T data;
 
@@ -14,13 +18,6 @@ public class ResponseData<T> {
     public ResponseData(int status, String message) {
         this.status = status;
         this.message = message;
-    }
-
-    // get,post
-    public ResponseData(int status, String message, T data) {
-        this.status = status;
-        this.message = message;
-        this.data = data;
     }
 
 }

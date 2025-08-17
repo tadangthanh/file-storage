@@ -13,6 +13,19 @@ app:
   delete:
     document-retention-days: 7
 spring:
+  security:
+    oauth2:
+      client:
+        registration:
+          permission-service:
+            authorization-grant-type: client_credentials
+            client-id: metadata-service
+            client-secret: ${metadata-service-client-secret}
+            scope: read
+            provider: springkeycloak
+        provider:
+          springkeycloak:
+            issuer-uri: ${KEYCLOAK_ISSUER_URI:http://localhost:9000/realms/documentstorage}
   #data source
   datasource:
     url: jdbc:mysql://${MYSQL_HOST:localhost}:${MYSQL_PORT:3306}/metadataservice?createDatabaseIfNotExist=true&useUnicode=yes&characterEncoding=UTF-8&useSSL=false&allowPublicKeyRetrieval=true
@@ -24,6 +37,22 @@ spring:
       ddl-auto: update
     generate-ddl: false
     database-platform: org.hibernate.dialect.MySQL8Dialect
+  cloud:
+    azure:
+      storage:
+        blob:
+          container-name: luu-tru-tai-lieu
+      key-vault:
+        secret:
+          property-source-enabled: true
+          property-sources:
+            - endpoint: https://luutrutailieukeyvault.vault.azure.net/
+              retry:
+                mode: exponential
+                exponential:
+                  max-retries: 4
+                  base-delay: PT0.0801S
+                  max-delay: PT9S
   kafka:
     producer:
       bootstrap-servers: localhost:9092,localhost:9093,localhost:9094
@@ -49,3 +78,21 @@ spring:
     listener:
       ack-mode: manual              # Nếu enable-auto-commit=false thì thường dùng manual
       concurrency: 3                # Số thread xử lý song song
+
+
+resilience4j:
+  circuitbreaker:
+    instances:
+      permissionService:
+        register-health-indicator: true
+        sliding-window-type: COUNT_BASED
+        sliding-window-size: 10           # Xét trên 10 request gần nhất
+        failure-rate-threshold: 50        # Nếu 50% request fail -> mở circuit
+        wait-duration-in-open-state: 5s   # Thời gian chờ trước khi thử lại (half-open)
+        permitted-number-of-calls-in-half-open-state: 3
+        automatic-transition-from-open-to-half-open-enabled: true
+        minimum-number-of-calls: 5        # Cần tối thiểu 5 request trước khi tính tỷ lệ fail
+  timelimiter:
+    instances:
+      permissionService:
+        timeout-duration: 2s              # Timeout cho mỗi request

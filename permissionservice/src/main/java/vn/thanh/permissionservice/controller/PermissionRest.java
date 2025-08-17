@@ -1,5 +1,6 @@
 package vn.thanh.permissionservice.controller;
 
+import com.azure.core.annotation.Get;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.validation.annotation.Validated;
@@ -8,7 +9,10 @@ import vn.thanh.permissionservice.dto.PermissionAddRequest;
 import vn.thanh.permissionservice.dto.PermissionDto;
 import vn.thanh.permissionservice.dto.PermissionRequest;
 import vn.thanh.permissionservice.dto.ResponseData;
+import vn.thanh.permissionservice.entity.ResourceType;
 import vn.thanh.permissionservice.service.IPermissionService;
+
+import java.util.UUID;
 
 @RequiredArgsConstructor
 @RestController
@@ -31,5 +35,18 @@ public class PermissionRest {
     public ResponseData<Void> delPer(@PathVariable Long permissionId) {
         permissionService.deletePermissionById(permissionId);
         return new ResponseData<>(204, "Thành công", null);
+    }
+
+    @GetMapping
+    public ResponseData<Boolean> hasPermission(@RequestParam("userId") UUID userId,
+                                               @RequestParam("resourceId") Long resourceId,
+                                               @RequestParam("resourceType") ResourceType resourceType,
+                                               @RequestParam("permissionBit") int permissionBit) {
+        PermissionRequest request = new PermissionRequest();
+        request.setResourceType(resourceType);
+        request.setUserId(userId);
+        request.setPermissionBit(permissionBit);
+        request.setResourceId(resourceId);
+        return new ResponseData<>(200, "Thành công", permissionService.hasPermission(request));
     }
 }
