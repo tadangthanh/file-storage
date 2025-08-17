@@ -11,6 +11,7 @@ import vn.thanh.metadataservice.dto.ResponseData;
 import vn.thanh.metadataservice.service.ICategoryService;
 
 import java.util.List;
+import java.util.UUID;
 
 @RestController
 @RequiredArgsConstructor
@@ -38,5 +39,10 @@ public class CategoryRest {
     public ResponseData<CategoryDto> deleteCategory(@PathVariable Long categoryId) {
         categoryService.deleteCategoryById(categoryId);
         return new ResponseData<>(204, "thành công", null);
+    }
+
+    @GetMapping("/{userId}/is-owner/{categoryId}")
+    public ResponseData<Boolean> isOwner(@PathVariable UUID userId, @PathVariable Long categoryId) {
+        return new ResponseData<>(200, "Thành công", categoryService.checkUserIdOwner(userId, categoryId));
     }
 }

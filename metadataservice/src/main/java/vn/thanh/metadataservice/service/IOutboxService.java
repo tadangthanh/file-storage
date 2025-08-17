@@ -8,4 +8,6 @@ public interface IOutboxService {
     void addDeleteMetadataEvent(List<Long> metadataIds);
 
     void addCreateMetadataEvent(MetadataCreateMessage message);
+
+    void addDeleteCategoryEvent(List<Long> categoryIds);
 }

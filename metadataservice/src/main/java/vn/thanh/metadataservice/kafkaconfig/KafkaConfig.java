@@ -18,6 +18,10 @@ public class KafkaConfig {
     private String metadataCleanupTopic;
     @Value("${app.kafka.metadata-delete-topic}")
     private String metadataDeleteTopic;
+    @Value("${app.kafka.metadata-create-topic}")
+    private String metadataCreateTopic;
+    @Value("${app.kafka.category-delete-topic}")
+    private String categoryDeleteTopic;
 
     @Bean
     NewTopic metadataUpdateTopic() {
@@ -35,6 +39,16 @@ public class KafkaConfig {
     NewTopic metadataDeleteTopic() {
         // topicname, partition number,replication number (thuong bang so broker server)
         return new NewTopic(metadataDeleteTopic, 2, (short) 3);
+    }
+    @Bean
+    NewTopic metadataCreateTopic() {
+        // topicname, partition number,replication number (thuong bang so broker server)
+        return new NewTopic(metadataCreateTopic, 2, (short) 3);
+    }
+    @Bean
+    NewTopic categoryDeleteTopic() {
+        // topicname, partition number,replication number (thuong bang so broker server)
+        return new NewTopic(categoryDeleteTopic, 2, (short) 3);
     }
 
     // cái này sẽ dùng in memory retry, tức là k tạo topic retry

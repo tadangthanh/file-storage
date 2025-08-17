@@ -15,9 +15,8 @@ import java.util.UUID;
 public interface PermissionRepo extends JpaRepository<Permission, Long> {
     Optional<Permission> findByUserIdAndResourceTypeAndResourceId(UUID userId, ResourceType resourceType, Long resourceId);
 
-    Optional<Permission> findByUserIdAndRResourceId(UUID userId, Long resourceId);
-
-    @Modifying
     @Transactional
     void deleteAllByResourceIdInAndResourceType(List<Long> metadataIds, ResourceType resourceType);
+
+    boolean existsByResourceIdAndResourceType(Long resourceId, ResourceType resourceType);
 }

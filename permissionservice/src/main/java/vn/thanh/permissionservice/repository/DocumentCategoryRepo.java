@@ -16,7 +16,12 @@ public interface DocumentCategoryRepo extends JpaRepository<DocumentCategoryMap,
     @Modifying
     @Transactional
     void deleteAllByDocumentIdIn(List<Long> documentIds);
+
     // Tìm categoryId theo documentId
     @Query("select d.categoryId from DocumentCategoryMap d where d.documentId = :documentId")
     Optional<Long> findCategoryIdByDocumentId(@Param("documentId") Long documentId);
+
+    @Modifying
+    @Transactional
+    void deleteAllByCategoryIdIn(List<Long> categoryIds);
 }

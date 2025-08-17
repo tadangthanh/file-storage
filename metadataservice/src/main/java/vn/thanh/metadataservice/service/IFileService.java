@@ -26,4 +26,6 @@ public interface IFileService {
     PageResponse<List<FileResponse>> getPage(Pageable pageable, String[] files);
 
     void validateOwnerOfAllFile(UUID userId, List<Long> filesId);
+
+    Boolean checkUserIsOwner(UUID userId, Long docId);
 }

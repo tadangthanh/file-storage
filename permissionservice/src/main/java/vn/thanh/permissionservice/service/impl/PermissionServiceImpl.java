@@ -7,17 +7,20 @@ import org.springframework.kafka.annotation.RetryableTopic;
 import org.springframework.retry.annotation.Backoff;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import vn.thanh.permissionservice.client.MetadataService;
 import vn.thanh.permissionservice.dto.PermissionAddRequest;
 import vn.thanh.permissionservice.dto.PermissionDto;
 import vn.thanh.permissionservice.dto.PermissionRequest;
 import vn.thanh.permissionservice.entity.Permission;
 import vn.thanh.permissionservice.entity.Perms;
 import vn.thanh.permissionservice.entity.ResourceType;
+import vn.thanh.permissionservice.exception.AccessDeniedException;
 import vn.thanh.permissionservice.exception.ResourceNotFoundException;
 import vn.thanh.permissionservice.mapper.PermissionMapper;
 import vn.thanh.permissionservice.repository.PermissionRepo;
 import vn.thanh.permissionservice.service.IDocumentCategoryMapService;
 import vn.thanh.permissionservice.service.IPermissionService;
+import vn.thanh.permissionservice.utils.AuthUtils;
 
 import java.util.List;
 import java.util.UUID;
@@ -30,19 +33,39 @@ public class PermissionServiceImpl implements IPermissionService {
     private final PermissionMapper permissionMapper;
     private final PermissionRepo permissionRepo;
     private final IDocumentCategoryMapService documentCategoryMapService;
+    private final MetadataService metadataService;
 
     @Override
     public PermissionDto assignPermission(PermissionRequest req) {
         log.info("assign permission: {}, resource id: {}, user id: {}", Perms.toList(req.getPermissionBit()),
                 req.getResourceId(), req.getUserId());
+        isOwnerResource(req.getResourceId(), req.getResourceType());
         Permission permission = permissionRepo
                 .findByUserIdAndResourceTypeAndResourceId(req.getUserId(), req.getResourceType(), req.getResourceId())
                 .orElseGet(() -> permissionMapper.toEntity(req));
 
         permission.add(req.getPermissionBit());
+        permission.setResourceType(req.getResourceType());
         permission = permissionRepo.save(permission);
 
         return toDto(permission);
+    }
+
+    private void isOwnerResource(Long resourceId, ResourceType resourceType) {
+        UUID userId = AuthUtils.getUserId();
+        if (resourceType == ResourceType.DOCUMENT) {
+            boolean isOwner = metadataService.userIsOwnerDocument(userId, resourceId).getData();
+            log.info("is owner document: {}, resource id: {}, user id: {}", isOwner, resourceId, userId);
+            if (!isOwner) {
+                throw new AccessDeniedException("Bạn không có quyền với tài nguyên này");
+            }
+            return;
+        }
+        boolean isOwner = metadataService.userIsOwnerCategory(userId, resourceId).getData();
+        log.info("is owner category: {}, resource id: {}, user id: {}", isOwner, resourceId, userId);
+        if (!isOwner) {
+            throw new AccessDeniedException("Bạn không có quyền với tài nguyên này");
+        }
     }
 
     /***
@@ -97,7 +120,6 @@ public class PermissionServiceImpl implements IPermissionService {
     }
 
 
-
     @Override
     public Permission getPermissionById(Long id) {
         return permissionRepo.findById(id).orElseThrow(() -> {
@@ -126,10 +148,21 @@ public class PermissionServiceImpl implements IPermissionService {
             exclude = {NullPointerException.class, RuntimeException.class} // danh sach exclude ko retry ma day sang thang DLT
     )
     @KafkaListener(topics = "${app.kafka.metadata-delete-topic}", groupId = "${app.kafka.permission-group}")
-    public void deleteAllByMetadataIds(List<Long> metadataIds) {
+    public void listenMetadataDelete(List<Long> metadataIds) {
         log.info("received kafka: delete all by metadata ids: {}", metadataIds.toString());
         documentCategoryMapService.deleteAllByDocumentIds(metadataIds);
         permissionRepo.deleteAllByResourceIdInAndResourceType(metadataIds, ResourceType.DOCUMENT);
     }
 
+    @RetryableTopic(
+            attempts = "3", // Tổng số lần thử = 3 (lần gốc + 2 lần retry)
+            backoff = @Backoff(delay = 1000, multiplier = 1.0),
+            dltTopicSuffix = ".DLT", // Hậu tố DLT
+            exclude = {NullPointerException.class, RuntimeException.class} // danh sach exclude ko retry ma day sang thang DLT
+    )
+    @KafkaListener(topics = "${app.kafka.category-delete-topic}", groupId = "${app.kafka.permission-group}")
+    public void listenCategoryDelete(List<Long> categoryIds) {
+        log.info("received kafka: category delete ids: {}", categoryIds.toString());
+        permissionRepo.deleteAllByResourceIdInAndResourceType(categoryIds, ResourceType.CATEGORY);
+    }
 }

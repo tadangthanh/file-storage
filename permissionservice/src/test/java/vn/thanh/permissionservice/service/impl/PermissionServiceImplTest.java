@@ -6,11 +6,18 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContext;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.oauth2.jwt.Jwt;
+import vn.thanh.permissionservice.client.MetadataService;
 import vn.thanh.permissionservice.dto.PermissionAddRequest;
 import vn.thanh.permissionservice.dto.PermissionDto;
 import vn.thanh.permissionservice.dto.PermissionRequest;
+import vn.thanh.permissionservice.dto.ResponseData;
 import vn.thanh.permissionservice.entity.Permission;
 import vn.thanh.permissionservice.entity.ResourceType;
+import vn.thanh.permissionservice.exception.AccessDeniedException;
 import vn.thanh.permissionservice.exception.ResourceNotFoundException;
 import vn.thanh.permissionservice.mapper.PermissionMapper;
 import vn.thanh.permissionservice.repository.PermissionRepo;
@@ -19,7 +26,11 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 
 @ExtendWith(MockitoExtension.class)
@@ -30,15 +41,17 @@ public class PermissionServiceImplTest {
     PermissionRepo permissionRepo;
     @Mock
     DocumentCategoryMapServiceImpl documentCategoryMapService;
+    @Mock
+    MetadataService metadataService;
     @InjectMocks
     private PermissionServiceImpl permissionService;
 
 
     @Test
-    void assignPermission() {
+    void assignPermission_owner_shouldSaveAndReturnDto() {
         PermissionRequest request = new PermissionRequest();
         UUID userId = UUID.randomUUID();
-        request.setPermissionBit(1); // READ
+        request.setPermissionBit(1);
         request.setResourceId(1L);
         request.setUserId(userId);
         request.setResourceType(ResourceType.CATEGORY);
@@ -59,22 +72,68 @@ public class PermissionServiceImplTest {
         dtoMock.setResourceType(ResourceType.CATEGORY);
         dtoMock.setPermissions(List.of("READ"));
 
+        // fake SecurityContext với JWT
+        Jwt jwt = Jwt.withTokenValue("token")
+                .subject(userId.toString())
+                .header("alg", "none")
+                .claim("scope", "USER")
+                .build();
+
+        Authentication authentication = mock(Authentication.class);
+        when(authentication.getPrincipal()).thenReturn(jwt);
+        SecurityContext securityContext = mock(SecurityContext.class);
+        when(securityContext.getAuthentication()).thenReturn(authentication);
+        SecurityContextHolder.setContext(securityContext);
+
+        // mock metadataService trả về true (là owner)
+        given(metadataService.userIsOwnerCategory(userId, request.getResourceId()))
+                .willReturn(new ResponseData<>(200, "Thanh cong", true));
+
         // mock mapper + repo
         given(permissionMapper.toEntity(request)).willReturn(permissionEntity);
         given(permissionRepo.findByUserIdAndResourceTypeAndResourceId(userId, ResourceType.CATEGORY, 1L))
-                .willReturn(Optional.empty()); // chưa có thì tạo mới
+                .willReturn(Optional.empty());
         given(permissionRepo.save(permissionEntity)).willReturn(permissionEntity);
         given(permissionMapper.toDto(permissionEntity)).willReturn(dtoMock);
 
-        // act
-        PermissionDto dto = permissionService.assignPermission(request);
+        // when
+        PermissionDto result = permissionService.assignPermission(request);
 
-        // assert
-        Assertions.assertEquals(request.getResourceId(), dto.getResourceId());
-        Assertions.assertEquals(request.getUserId(), dto.getUserId());
-        Assertions.assertEquals(request.getResourceType(), dto.getResourceType());
-        Assertions.assertIterableEquals(List.of("READ"), dto.getPermissions());
-        Assertions.assertNotNull(dto.getId());
+        // then
+        assertThat(result.getId()).isEqualTo(dtoMock.getId());
+        assertThat(result.getPermissions()).containsExactly("READ");
+    }
+
+    @Test
+    void assignPermission_notOwner_shouldThrowAccessDenied() {
+        PermissionRequest request = new PermissionRequest();
+        UUID userId = UUID.randomUUID();
+        request.setPermissionBit(1);
+        request.setResourceId(1L);
+        request.setUserId(userId);
+        request.setResourceType(ResourceType.CATEGORY);
+
+        // fake SecurityContext với JWT
+        Jwt jwt = Jwt.withTokenValue("token")
+                .subject(userId.toString()) // subject chính là userId
+                .header("alg", "none")
+                .claim("scope", "USER")
+                .build();
+
+        Authentication authentication = mock(Authentication.class);
+        when(authentication.getPrincipal()).thenReturn(jwt);
+        SecurityContext securityContext = mock(SecurityContext.class);
+        when(securityContext.getAuthentication()).thenReturn(authentication);
+        SecurityContextHolder.setContext(securityContext);
+
+        // mock metadataService trả về false (không phải owner)
+        given(metadataService.userIsOwnerCategory(userId, request.getResourceId()))
+                .willReturn(new ResponseData<>(200, "Thanh cong", false));
+
+        // when + then
+        assertThatThrownBy(() -> permissionService.assignPermission(request))
+                .isInstanceOf(AccessDeniedException.class)
+                .hasMessage("Bạn không có quyền với tài nguyên này");
     }
 
     @Test

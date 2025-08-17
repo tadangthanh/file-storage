@@ -11,6 +11,7 @@ import vn.thanh.permissionservice.dto.MetadataCreateMessage;
 import vn.thanh.permissionservice.entity.DocumentCategoryMap;
 import vn.thanh.permissionservice.entity.ResourceType;
 import vn.thanh.permissionservice.repository.DocumentCategoryRepo;
+import vn.thanh.permissionservice.repository.PermissionRepo;
 import vn.thanh.permissionservice.service.IDocumentCategoryMapService;
 
 import java.util.List;
@@ -21,7 +22,7 @@ import java.util.List;
 @Slf4j
 public class DocumentCategoryMapServiceImpl implements IDocumentCategoryMapService {
     private final DocumentCategoryRepo documentCategoryRepo;
-
+    private final PermissionRepo permissionRepo;
 
     @Override
     public void deleteAllByDocumentIds(List<Long> documentIds) {
@@ -51,7 +52,22 @@ public class DocumentCategoryMapServiceImpl implements IDocumentCategoryMapServi
     @KafkaListener(topics = "${app.kafka.metadata-create-topic}", groupId = "${app.kafka.permission-group}")
     public void listenMetadataCreate(MetadataCreateMessage message) {
         log.info("received kafka: metadata create category id: {}, document id: {}", message.getCategoryId(), message.getMetadataId());
-        this.add(message.getMetadataId(), message.getCategoryId());
+        // kiểm tra xem category có permission hay ko, nếu có thì mới thêm document map category
+        if (permissionRepo.existsByResourceIdAndResourceType(message.getCategoryId(), ResourceType.CATEGORY)) {
+            this.add(message.getMetadataId(), message.getCategoryId());
+        }
+    }
+
+    @RetryableTopic(
+            attempts = "3", // Tổng số lần thử = 3 (lần gốc + 2 lần retry)
+            backoff = @Backoff(delay = 1000, multiplier = 1.0),
+            dltTopicSuffix = ".DLT", // Hậu tố DLT
+            exclude = {NullPointerException.class, RuntimeException.class} // danh sach exclude ko retry ma day sang thang DLT
+    )
+    @KafkaListener(topics = "${app.kafka.category-delete-topic}", groupId = "${app.kafka.permission-group}")
+    public void listenCategoryDelete(List<Long> categoryIds) {
+        log.info("received kafka: category delete ids: {}", categoryIds.toString());
+        documentCategoryRepo.deleteAllByCategoryIdIn(categoryIds);
     }
 
 }

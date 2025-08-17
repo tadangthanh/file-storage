@@ -6,6 +6,7 @@ app:
     metadata-cleanup-topic: metadata.cleanup
     metadata-delete-topic: metadata.delete
     metadata-create-topic: metadata.create
+    category-delete-topic: category.delete
     blob-delete-success-topic: blob.delete.success
     blob-delete-fail-topic: blob.delete.fail
     metadata-group: metadata-group
