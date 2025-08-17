@@ -39,6 +39,7 @@ public class PermissionServiceImpl implements IPermissionService {
     public PermissionDto assignPermission(PermissionRequest req) {
         log.info("assign permission: {}, resource id: {}, user id: {}", Perms.toList(req.getPermissionBit()),
                 req.getResourceId(), req.getUserId());
+        // check user auth is owner resource
         isOwnerResource(req.getResourceId(), req.getResourceType());
         Permission permission = permissionRepo
                 .findByUserIdAndResourceTypeAndResourceId(req.getUserId(), req.getResourceType(), req.getResourceId())
@@ -79,6 +80,8 @@ public class PermissionServiceImpl implements IPermissionService {
         log.info("req add permission: {}, user id: {} to permission id:{}", Perms.toList(permissionRequest.getPermissionBit()),
                 permissionRequest.getUserId(), permissionId);
         Permission permissionExists = getPermissionById(permissionId);
+        // check user auth is owner resource
+        isOwnerResource(permissionExists.getResourceId(), permissionExists.getResourceType());
         permissionExists.add(permissionRequest.getPermissionBit());
         permissionExists = permissionRepo.save(permissionExists);
         return toDto(permissionExists);
@@ -87,11 +90,11 @@ public class PermissionServiceImpl implements IPermissionService {
     /***
      *
      * @param req: resource id, permission bit, user id, resource Type
-     * @return
+     * @return: permission in document or category
      */
     @Override
     public boolean hasPermission(PermissionRequest req) {
-        log.info("user has permission? : {}, resource id: {}, user id: {}",
+        log.info("check user permission : {}, resource id: {}, user id: {}",
                 Perms.toList(req.getPermissionBit()),
                 req.getResourceId(),
                 req.getUserId());
@@ -131,7 +134,10 @@ public class PermissionServiceImpl implements IPermissionService {
     @Override
     public void deletePermissionById(Long permissionId) {
         log.info("delete permission by id: {}", permissionId);
-        permissionRepo.deleteById(permissionId);
+        Permission permissionExists = getPermissionById(permissionId);
+        // check user auth is owner resource
+        isOwnerResource(permissionExists.getResourceId(), permissionExists.getResourceType());
+        permissionRepo.delete(permissionExists);
     }
 
     @Override
