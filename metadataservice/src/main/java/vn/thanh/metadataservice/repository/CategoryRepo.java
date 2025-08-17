@@ -14,6 +14,8 @@ public interface CategoryRepo extends JpaRepository<Category, Long> , JpaSpecifi
     @Query("SELECT COUNT(c) > 0 FROM Category c WHERE LOWER(c.name) = LOWER(:name) and c.ownerId = :ownerId")
     boolean existsByOwnerAndNameIgnoreCase(@Param("name") String name,@Param("ownerId")  UUID ownerId);
 
-    @Query("SELECT COUNT(c) > 0 FROM Category c WHERE c.id=id and c.ownerId = :userId")
-    boolean existsByOwnerAndCategoryId(@Param("id")Long id,@Param("userId") UUID userId);
+    @Query("SELECT COUNT(c) > 0 FROM Category c WHERE c.id = :id AND c.ownerId = :userId")
+    boolean existsByOwnerAndCategoryId(@Param("id") Long id, @Param("userId") UUID userId);
+
+
 }

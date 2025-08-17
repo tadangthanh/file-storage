@@ -1,7 +1,5 @@
 package vn.thanh.metadataservice.repository;
 
-import jakarta.persistence.LockModeType;
-import jakarta.persistence.QueryHint;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.*;
 import org.springframework.data.repository.query.Param;
@@ -9,7 +7,6 @@ import org.springframework.stereotype.Repository;
 import vn.thanh.metadataservice.entity.File;
 import vn.thanh.metadataservice.entity.Status;
 
-import java.time.Duration;
 import java.util.List;
 import java.util.UUID;
 
@@ -47,4 +44,5 @@ public interface FileRepo extends JpaRepository<File, Long>, JpaSpecificationExe
                                  @Param("waitMinutes") long waitMinutes,
                                  Pageable pageable);
 
+    Boolean existsByOwnerIdAndId(UUID ownerId, Long id);
 }

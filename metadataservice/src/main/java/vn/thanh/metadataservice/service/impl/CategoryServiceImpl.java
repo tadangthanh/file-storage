@@ -18,6 +18,7 @@ import vn.thanh.metadataservice.repository.specification.EntitySpecificationsBui
 import vn.thanh.metadataservice.repository.specification.SpecificationUtil;
 import vn.thanh.metadataservice.service.ICategoryService;
 import vn.thanh.metadataservice.service.IFileService;
+import vn.thanh.metadataservice.service.IOutboxService;
 import vn.thanh.metadataservice.utils.AuthUtils;
 
 import java.util.List;
@@ -32,6 +33,7 @@ public class CategoryServiceImpl implements ICategoryService {
     private final CategoryMapper categoryMapper;
     private final CategoryValidation categoryValidation;
     private final IFileService fileService;
+    private final IOutboxService outboxService;
 
     @Override
     public CategoryDto createCategory(CategoryDto categoryDto) {
@@ -51,6 +53,7 @@ public class CategoryServiceImpl implements ICategoryService {
         // di chuyển file ra khỏi entity sẽ xóa 
         fileService.detachedCategory(id);
         categoryRepo.deleteById(id);
+        outboxService.addDeleteCategoryEvent(List.of(id));
     }
 
     @Override
@@ -86,5 +89,12 @@ public class CategoryServiceImpl implements ICategoryService {
         }
         spec = spec.and((root, query, criteriaBuilder) -> criteriaBuilder.equal(root.get("ownerId"), ownerId));
         return PaginationUtils.convertToPageResponse(categoryRepo.findAll(spec, pageable), pageable, categoryMapper::toDto);
+    }
+
+    @Override
+    public boolean checkUserIdOwner(UUID userId, Long categoryId) {
+        boolean isOwner = categoryRepo.existsByOwnerAndCategoryId(categoryId,userId);
+        log.info("user id: {}, owner category id: {}, ==> {}",userId,categoryId,isOwner);
+        return categoryRepo.existsByOwnerAndCategoryId(categoryId,userId);
     }
 }

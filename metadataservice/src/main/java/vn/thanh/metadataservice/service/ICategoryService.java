@@ -6,6 +6,7 @@ import vn.thanh.metadataservice.dto.PageResponse;
 import vn.thanh.metadataservice.entity.Category;
 
 import java.util.List;
+import java.util.UUID;
 
 public interface ICategoryService {
     CategoryDto createCategory(CategoryDto categoryDto);
@@ -17,4 +18,6 @@ public interface ICategoryService {
     Category getCategoryByIdOrThrow(Long id);
 
     PageResponse<List<CategoryDto>> getPage(Pageable pageable, String[] categories);
+
+    boolean checkUserIdOwner(UUID userId, Long categoryId);
 }

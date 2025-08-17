@@ -1,9 +1,6 @@
 package vn.thanh.permissionservice.entity;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Table;
-import jakarta.persistence.UniqueConstraint;
+import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -19,6 +16,7 @@ import static vn.thanh.permissionservice.entity.Perms.*;
 @Setter
 public class Permission extends BaseEntity {
     @Column(name = "resource_type", nullable = false)
+    @Enumerated(EnumType.STRING)
     private ResourceType resourceType;
     @Column(name = "resource_id", nullable = false)
     private Long resourceId;

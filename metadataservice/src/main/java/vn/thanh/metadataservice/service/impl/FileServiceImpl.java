@@ -208,4 +208,10 @@ public class FileServiceImpl implements IFileService {
             throw new AccessDeniedException("Bạn không có quyền tải lên file này");
         }
     }
+
+    @Override
+    public Boolean checkUserIsOwner(UUID userId, Long docId) {
+        log.info("check user id: {} is owner file id: {}", userId, docId);
+        return fileRepo.existsByOwnerIdAndId(userId,docId);
+    }
 }

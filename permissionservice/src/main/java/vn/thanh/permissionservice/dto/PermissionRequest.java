@@ -1,5 +1,6 @@
 package vn.thanh.permissionservice.dto;
 
+import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.Setter;
@@ -16,5 +17,6 @@ public class PermissionRequest {
     private Long resourceId;
     @NotNull(message = "resource type id is required")
     private ResourceType resourceType;
+    @Min(1)
     private int permissionBit;
 }

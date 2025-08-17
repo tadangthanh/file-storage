@@ -72,4 +72,8 @@ public class FileRest {
         fileService.validateOwnerOfAllFile(userId, fileIds);
         return new ResponseData<>(200, "OK");
     }
+    @GetMapping("/{userId}/is-owner/{docId}")
+    public ResponseData<Boolean> checkUserIsOwner(@PathVariable UUID userId, @PathVariable Long docId) {
+        return new ResponseData<>(200, "thành công", fileService.checkUserIsOwner(userId, docId));
+    }
 }

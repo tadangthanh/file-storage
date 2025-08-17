@@ -8,7 +8,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
-import org.springframework.security.access.AccessDeniedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
@@ -38,17 +37,6 @@ public class GlobalHandleException extends ResponseEntityExceptionHandler {
         errorResponse.setTimestamp(LocalDateTime.now());
         errorResponse.setStatus(HttpStatus.FORBIDDEN.value());
         errorResponse.setError(HttpStatus.FORBIDDEN.getReasonPhrase());
-        errorResponse.setMessage(ex.getMessage());
-        errorResponse.setPath(request.getDescription(false));
-        return new ResponseEntity<>(errorResponse, HttpStatus.OK);
-    }
-
-    @ExceptionHandler({AccessDeniedException.class})
-    public final ResponseEntity<ErrorResponse> handleUnauthorized(Exception ex, WebRequest request) {
-        ErrorResponse errorResponse = new ErrorResponse();
-        errorResponse.setTimestamp(LocalDateTime.now());
-        errorResponse.setStatus(HttpStatus.UNAUTHORIZED.value());
-        errorResponse.setError(HttpStatus.UNAUTHORIZED.getReasonPhrase());
         errorResponse.setMessage(ex.getMessage());
         errorResponse.setPath(request.getDescription(false));
         return new ResponseEntity<>(errorResponse, HttpStatus.OK);
