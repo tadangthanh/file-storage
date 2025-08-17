@@ -6,6 +6,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Pageable;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
+import vn.thanh.metadataservice.annotation.RequirePermission;
 import vn.thanh.metadataservice.dto.*;
 import vn.thanh.metadataservice.service.IFileService;
 
@@ -48,7 +49,9 @@ public class FileRest {
         return new ResponseData<>(200, "Thành công", fileService.updateFileById(fileId, fileRequest));
     }
 
-
+    @RequirePermission(resourceType = ResourceType.DOCUMENT,
+            resourceParam = "fileId", // trùng với @PathVariable Long fileId
+            permissionBit = Perms.READ)
     @GetMapping("/{fileId}")
     public ResponseData<FileResponse> getFileById(@PathVariable Long fileId) {
         return new ResponseData<>(200, "Thành công", fileService.getFileById(fileId));

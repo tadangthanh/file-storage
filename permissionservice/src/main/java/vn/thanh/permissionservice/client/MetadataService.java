@@ -2,17 +2,14 @@ package vn.thanh.permissionservice.client;
 
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import org.springframework.cloud.openfeign.FeignClient;
-import org.springframework.security.access.AccessDeniedException;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import vn.thanh.permissionservice.dto.ResponseData;
-import vn.thanh.permissionservice.exception.ResourceNotFoundException;
 import vn.thanh.permissionservice.interceptor.FeignConfig;
 
 import java.util.UUID;
 
 @FeignClient(name = "metadata-service", configuration = FeignConfig.class)
-
 public interface MetadataService {
     @GetMapping("/api/v1/files/{userId}/is-owner/{docId}")
     @CircuitBreaker(name = "metadataService", fallbackMethod = "userIsOwnerDocumentFallBack")

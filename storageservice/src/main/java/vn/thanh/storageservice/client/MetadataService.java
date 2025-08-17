@@ -14,7 +14,6 @@ import java.util.List;
 import java.util.UUID;
 
 @FeignClient(name = "metadata-service", configuration = FeignConfig.class)
-
 public interface MetadataService {
     @GetMapping("/api/v1/files/{metadataId}")
     @CircuitBreaker(name = "metadataService", fallbackMethod = "fallback")
