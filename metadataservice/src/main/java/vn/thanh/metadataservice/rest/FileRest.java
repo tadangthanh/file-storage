@@ -23,27 +23,49 @@ public class FileRest {
     private final IFileService fileService;
 
     @PostMapping("/init")
-    public ResponseData<FileResponse> intMetadata(@RequestBody MetadataRequest metadataRequest) {
+    public ResponseData<FileResponse> initMetadata(@RequestBody MetadataRequest metadataRequest) {
+        return new ResponseData<>(201, "Thành công", fileService.initMetadata(metadataRequest));
+    }
+    @RequirePermission(resourceType = ResourceType.CATEGORY,
+            resourceParam = "categoryId", // trùng với @PathVariable Long fileId
+            permissionBit = Perms.WRITE)
+    @PostMapping("/init/{categoryId}")
+    public ResponseData<FileResponse> initMetadataWithCategory(
+            @PathVariable Long categoryId,
+            @RequestBody MetadataRequest metadataRequest) {
+        metadataRequest.setCategoryId(categoryId);
         return new ResponseData<>(201, "Thành công", fileService.initMetadata(metadataRequest));
     }
 
+    @RequirePermission(resourceType = ResourceType.DOCUMENT,
+            resourceParam = "fileId", // trùng với @PathVariable Long fileId
+            permissionBit = Perms.DELETE)
     @DeleteMapping("/{fileId}/hard")
     public ResponseData<Void> hardDelete(@PathVariable Long fileId) {
         fileService.hardDeleteFile(fileId);
         return new ResponseData<>(204, "Xóa thành công", null);
     }
 
+    @RequirePermission(resourceType = ResourceType.DOCUMENT,
+            resourceParam = "fileId", // trùng với @PathVariable Long fileId
+            permissionBit = Perms.DELETE)
     @DeleteMapping("/{fileId}/soft")
     public ResponseData<Void> softDelete(@PathVariable Long fileId) {
         fileService.softDeleteFileById(fileId);
         return new ResponseData<>(204, "Xóa thành công", null);
     }
 
+    @RequirePermission(resourceType = ResourceType.DOCUMENT,
+            resourceParam = "fileId", // trùng với @PathVariable Long fileId
+            permissionBit = Perms.WRITE)
     @PostMapping("/{fileId}/copy")
     public ResponseData<FileResponse> copy(@PathVariable Long fileId) {
         return new ResponseData<>(201, "Thành công", fileService.copyFileById(fileId));
     }
 
+    @RequirePermission(resourceType = ResourceType.DOCUMENT,
+            resourceParam = "fileId", // trùng với @PathVariable Long fileId
+            permissionBit = Perms.WRITE)
     @PutMapping("/{fileId}")
     public ResponseData<FileResponse> update(@PathVariable Long fileId, @Valid @RequestBody FileRequest fileRequest) {
         return new ResponseData<>(200, "Thành công", fileService.updateFileById(fileId, fileRequest));
@@ -57,7 +79,9 @@ public class FileRest {
         return new ResponseData<>(200, "Thành công", fileService.getFileById(fileId));
     }
 
-
+    @RequirePermission(resourceType = ResourceType.DOCUMENT,
+            resourceParam = "fileId", // trùng với @PathVariable Long fileId
+            permissionBit = Perms.READ)
     @GetMapping("/{fileId}/onlyoffice-config")
     public ResponseData<OnlyOfficeConfig> getOnlyOfficeConfig(@PathVariable Long fileId) {
         return new ResponseData<>(200, "Thành công", fileService.getOnlyOfficeConfig(fileId));
@@ -75,6 +99,7 @@ public class FileRest {
         fileService.validateOwnerOfAllFile(userId, fileIds);
         return new ResponseData<>(200, "OK");
     }
+
     @GetMapping("/{userId}/is-owner/{docId}")
     public ResponseData<Boolean> checkUserIsOwner(@PathVariable UUID userId, @PathVariable Long docId) {
         return new ResponseData<>(200, "thành công", fileService.checkUserIsOwner(userId, docId));
