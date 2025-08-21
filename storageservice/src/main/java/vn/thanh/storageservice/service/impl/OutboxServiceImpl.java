@@ -7,7 +7,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-import vn.thanh.storageservice.dto.MetadataUpdate;
+import vn.thanh.storageservice.dto.DocumentReady;
 import vn.thanh.storageservice.entity.OutboxEvent;
 import vn.thanh.storageservice.entity.OutboxEventStatus;
 import vn.thanh.storageservice.exception.JsonSerializeException;
@@ -33,7 +33,7 @@ public class OutboxServiceImpl implements IOutboxService {
 
     @Override
     @Transactional
-    public void addUpdateMetadataEvent(MetadataUpdate update) {
+    public void addUploadCompletedEvent(DocumentReady update) {
         try {
             String payload = objectMapper.writeValueAsString(update);
             OutboxEvent event = OutboxEvent.builder()

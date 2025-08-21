@@ -271,7 +271,7 @@ public class AzureStorageServiceImpl implements IAzureStorageService {
             BlobClient blobClient = blobContainerClient.getBlobClient(blobName);
 
             // Xác định thời gian hết hạn cho SAS token (ví dụ 1 giờ)
-            OffsetDateTime expiryTime = OffsetDateTime.now().plusHours(1);
+            OffsetDateTime expiryTime = OffsetDateTime.now().plusHours(24);
 
             // Tạo quyền truy cập SAS cho blob (chỉ phép đọc)
             BlobSasPermission permission = new BlobSasPermission()

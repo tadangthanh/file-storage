@@ -7,7 +7,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-import vn.thanh.storageservice.dto.MetadataUpdate;
+import vn.thanh.storageservice.dto.DocumentReady;
 import vn.thanh.storageservice.dto.VersionDto;
 import vn.thanh.storageservice.service.IOutboxService;
 import vn.thanh.storageservice.service.IVersionService;
@@ -60,22 +60,16 @@ public class BlobEventController {
                 String blobName = String.join("/", Arrays.copyOfRange(parts, 2, parts.length));
                 long size = contentLengthNum.longValue();
 
-                MetadataUpdate metadataUpdate = new MetadataUpdate();
-                metadataUpdate.setId(metadataId);
-                metadataUpdate.setName(originalFileName);
-                metadataUpdate.setType(contentType);
-                metadataUpdate.setSize(size);
-                metadataUpdate.setCurrentVersionId(currentVersionId);
-
-                VersionDto versionDto = new VersionDto();
-                versionDto.setSize(size);
-                versionDto.setId(currentVersionId);
-                versionDto.setBlobName(blobName);
-                versionDto.setMetadataId(metadataId);
-                // update version when upload successful
-                versionService.completeUpload(currentVersionId, versionDto);
-                outboxService.addUpdateMetadataEvent(metadataUpdate);
+                DocumentReady documentReady = new DocumentReady();
+                documentReady.setDocumentId(metadataId);
+                documentReady.setName(originalFileName);
+                documentReady.setType(contentType);
+                documentReady.setBlobName(blobName);
+                documentReady.setSize(size);
+                documentReady.setCurrentVersionId(currentVersionId);
                 log.info("Blob created event: metadata id: {}, version id: {}, originalFileName: {}, contentType: {}, size: {}, blobName: {}", parts[2], parts[3], parts[4], contentType, size, blobName);
+
+                versionService.completeUpload(documentReady);
                 // TODO: Xử lý logic khi file được upload xong
             }
         }

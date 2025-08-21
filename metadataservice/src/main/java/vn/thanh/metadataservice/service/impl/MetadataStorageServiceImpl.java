@@ -180,10 +180,10 @@ public class MetadataStorageServiceImpl implements IMetadataStorageService {
     @KafkaListener(topics = "${app.kafka.metadata-update-topic}", groupId = "${app.kafka.metadata-group}")
     public void listenUpdateMetadata(MetadataUpdate metadataUpdate) {
         log.info("received metadata update: {}", metadataUpdate.toString());
-        if (metadataUpdate.getId() == null) {
+        if (metadataUpdate.getDocumentId() == null) {
             throw new BadRequestException("Lỗi tải file lên");
         }
-        File fileExist = getFileByIdOrThrow(metadataUpdate.getId());
+        File fileExist = getFileByIdOrThrow(metadataUpdate.getDocumentId());
         fileMapper.updateMetadata(fileExist, metadataUpdate);
         fileRepo.save(fileExist);
     }

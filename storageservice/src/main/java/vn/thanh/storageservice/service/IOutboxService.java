@@ -1,11 +1,11 @@
 package vn.thanh.storageservice.service;
 
-import vn.thanh.storageservice.dto.MetadataUpdate;
+import vn.thanh.storageservice.dto.DocumentReady;
 
 import java.util.List;
 
 public interface IOutboxService {
-    void addUpdateMetadataEvent(MetadataUpdate update);
+    void addUploadCompletedEvent(DocumentReady update);
 
     void addMetadataCleanUpEvent(List<Long> metadataIds);
 

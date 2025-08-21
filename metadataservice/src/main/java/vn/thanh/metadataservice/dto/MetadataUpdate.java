@@ -8,7 +8,7 @@ import lombok.ToString;
 @Setter
 @ToString
 public class MetadataUpdate {
-    private Long id;
+    private Long documentId;
     private Long currentVersionId;
     private Long size;
     private String type;

@@ -6,13 +6,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Service;
 import vn.thanh.storageservice.client.MetadataService;
-import vn.thanh.storageservice.dto.DeleteBlobsResult;
-import vn.thanh.storageservice.dto.UploadSignRequest;
-import vn.thanh.storageservice.dto.UploadUrlResponse;
-import vn.thanh.storageservice.dto.VersionDto;
+import vn.thanh.storageservice.dto.*;
 import vn.thanh.storageservice.entity.Version;
 import vn.thanh.storageservice.entity.VersionStatus;
-import vn.thanh.storageservice.exception.ResourceAlreadyExistsException;
 import vn.thanh.storageservice.exception.ResourceNotFoundException;
 import vn.thanh.storageservice.mapper.VersionMapper;
 import vn.thanh.storageservice.repository.VersionRepo;
@@ -54,7 +50,9 @@ public class VersionServiceImpl implements IVersionService {
             Version v = new Version();
             v.setMetadataId(req.getMetadataId());
             v.setVersionNumber(1);
+            v.setContentType(req.getContentType());
             v.setStatus(VersionStatus.UPLOADING);
+            v.setOwnerId(AuthUtils.getUserId());
             return v;
         }).collect(Collectors.toList());
 
@@ -83,12 +81,26 @@ public class VersionServiceImpl implements IVersionService {
 
 
     @Override
-    public void completeUpload(Long versionId, VersionDto versionDto) {
-        log.info("update version by id: {}", versionId);
-        Version versionExists = getVersionOrThrow(versionId);
+    public void completeUpload(DocumentReady documentReady) {
+        log.info("update version by id: {}", documentReady.getCurrentVersionId());
+        Version versionExists = getVersionOrThrow(documentReady.getCurrentVersionId());
+        VersionDto versionDto = new VersionDto();
+        versionDto.setSize(documentReady.getSize());
+        versionDto.setId(documentReady.getCurrentVersionId());
+        versionDto.setBlobName(documentReady.getBlobName());
+        versionDto.setMetadataId(documentReady.getDocumentId());
         versionMapper.updateVersionIgnoreVNumber(versionExists, versionDto);
         versionExists.setStatus(VersionStatus.AVAILABLE);
+        versionExists.setContentType(documentReady.getType());
         versionRepo.save(versionExists);
+
+        String sasUrl = azureStorageService.getBlobUrl(documentReady.getBlobName());
+        documentReady.setFileUrl(sasUrl);
+        documentReady.setCreatedBy(versionExists.getCreatedBy());
+        documentReady.setOwnerId(versionExists.getOwnerId());
+        documentReady.setType(versionExists.getContentType());
+        documentReady.setBlobName(versionExists.getBlobName());
+        outboxService.addUploadCompletedEvent(documentReady);
     }
 
 
