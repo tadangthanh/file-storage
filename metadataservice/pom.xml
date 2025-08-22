@@ -31,7 +31,6 @@
 		<spring-cloud.version>2025.0.0</spring-cloud.version>
 		<mapstruct.version>1.6.3</mapstruct.version>
 		<spring-cloud-azure.version>5.23.0</spring-cloud-azure.version>
-
 	</properties>
 	<dependencies>
 		<dependency>

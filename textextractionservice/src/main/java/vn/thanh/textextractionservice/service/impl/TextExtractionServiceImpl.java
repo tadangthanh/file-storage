@@ -35,6 +35,7 @@ public class TextExtractionServiceImpl implements ITextExtractionService {
             StringBuilder buffer = new StringBuilder();
             String line;
             int chunkIndex = 0;
+            System.out.println("0===================reader.readLine(): " + reader.readLine());
 
             while ((line = reader.readLine()) != null) {
                 buffer.append(line).append("\n");
@@ -56,6 +57,7 @@ public class TextExtractionServiceImpl implements ITextExtractionService {
                             blobName,
                             new Date()
                     );
+                    System.out.println("1===================message: " + message);
                     outboxService.addEventTextExtracted(message);
 
                     // giữ lại overlap, bỏ phần cũ
@@ -82,6 +84,7 @@ public class TextExtractionServiceImpl implements ITextExtractionService {
                         blobName,
                         new Date()
                 );
+                System.out.println("2===================message: " + message);
                 outboxService.addEventTextExtracted(message);
             }
 
@@ -95,8 +98,8 @@ public class TextExtractionServiceImpl implements ITextExtractionService {
 
     @KafkaListener(topics = "${app.kafka.metadata-update-topic}", groupId = "${app.kafka.text-extractor-group}")
     public void listen(DocumentReadyForExtraction message) {
-        log.info("Received file for extraction: documentId={}, blobName={}",
-                message.getDocumentId(), message.getBlobName());
+        log.info("Received file for extraction: documentId={}, blobName={} , fileUrl={}",
+                message.getDocumentId(), message.getBlobName(), message.getFileUrl());
         try (InputStream inputStream = new URL(message.getFileUrl()).openStream()) {
             this.extractAndSend(
                     message.getDocumentId(),

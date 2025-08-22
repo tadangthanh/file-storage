@@ -1,0 +1,56 @@
+PUT /documents
+{
+  "settings": {
+    "analysis": {
+      "analyzer": {
+        "folding_analyzer": {
+          "type": "custom",
+          "tokenizer": "standard",
+          "filter": [
+            "lowercase",
+            "asciifolding"
+          ]
+        }
+      }
+    }
+  },
+  "mappings": {
+    "properties": {
+      "documentId": {
+        "type": "long"
+      },
+      "version": {
+        "type": "integer"
+      },
+      "createdBy": {
+        "type": "keyword"
+      },
+      "chunkIndex": {
+        "type": "integer"
+      },
+      "text": {
+        "type": "text",
+        "analyzer": "folding_analyzer",
+        "search_analyzer": "folding_analyzer"
+      },
+      "ownerId": {
+        "type": "keyword"   // UUID => lưu dạng string (keyword) là hợp lý
+      },
+      "visibility": {
+        "type": "keyword"
+      },
+      "categoryId": {
+        "type": "long"
+      },
+      "allowedUserIds": {
+        "type": "long"      // đổi từ keyword → long
+      },
+      "allowedGroupIds": {
+        "type": "long"      // đổi từ keyword → long
+      },
+      "createdAt": {
+        "type": "date"
+      }
+    }
+  }
+}
