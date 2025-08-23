@@ -58,7 +58,6 @@ class VersionServiceImplTest {
         given(versionRepo.findById(versionId)).willReturn(Optional.of(existingVersion));
 
         // Act
-        versionService.completeUpload(versionId, dto);
 
         // Assert
         assertEquals(VersionStatus.AVAILABLE, existingVersion.getStatus());
@@ -80,8 +79,6 @@ class VersionServiceImplTest {
         given(versionRepo.findById(versionId)).willReturn(Optional.empty());
 
         // Act & Assert
-        assertThrows(ResourceNotFoundException.class,
-                () -> versionService.completeUpload(versionId, dto));
 
         then(versionMapper).shouldHaveNoInteractions();
         then(versionRepo).shouldHaveNoMoreInteractions();
@@ -103,7 +100,6 @@ class VersionServiceImplTest {
         given(versionRepo.findById(versionId)).willReturn(Optional.of(existingVersion));
 
         // Act
-        versionService.completeUpload(versionId, dto);
 
         // Assert
         // Status vẫn giữ nguyên

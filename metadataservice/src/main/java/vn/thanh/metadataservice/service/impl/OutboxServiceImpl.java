@@ -26,7 +26,6 @@ public class OutboxServiceImpl implements IOutboxService {
     private String metadataDeleteTopic;
     @Value("${app.kafka.metadata-create-topic}")
     private String metadataCreateTopic;
-
     @Value("${app.kafka.category-delete-topic}")
     private String categoryDeleteTopic;
 

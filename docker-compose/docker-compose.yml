@@ -14,6 +14,8 @@ services:
       - "3306:3306"
     volumes:
       - mysql_data:/var/lib/mysql
+    networks:
+      - app_network
   keycloak:
     image: quay.io/keycloak/keycloak:latest
     container_name: keycloak
@@ -32,6 +34,8 @@ services:
       - "9000:8080"
     depends_on:
       - mysql
+    networks:
+      - app_network
   zookeeper:
     image: confluentinc/cp-zookeeper
     environment:
@@ -40,6 +44,8 @@ services:
     ports:
       - 2181:2181
     restart: "on-failure"
+    networks:
+      - app_network
 
   kafka-1:
     image: confluentinc/cp-kafka:6.2.1
@@ -57,6 +63,8 @@ services:
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: INTERNAL:PLAINTEXT,EXTERNAL:PLAINTEXT #giao thuc ket noi bao mat
       KAFKA_INTER_BROKER_LISTENER_NAME: INTERNAL #ten cua giao thuc
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1 #à tham số cấu hình cho Kafka xác định số bản sao (replica) của topic nội bộ dùng để lưu trữ offsets của consumer group, 
+    networks:
+      - app_network
   #Giải thích cụ thể:
   # Kafka dùng một topic đặc biệt tên __consumer_offsets để lưu vị trí (offset) mà mỗi consumer group đã đọc đến đâu trên từng  partition.
   # KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR quyết định số lượng bản sao của topic này trong cluster Kafka.
@@ -75,6 +83,8 @@ services:
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: INTERNAL:PLAINTEXT,EXTERNAL:PLAINTEXT
       KAFKA_INTER_BROKER_LISTENER_NAME: INTERNAL
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+    networks:
+      - app_network
   kafka-3:
     image: confluentinc/cp-kafka:6.2.1
     depends_on:
@@ -90,5 +100,45 @@ services:
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: INTERNAL:PLAINTEXT,EXTERNAL:PLAINTEXT
       KAFKA_INTER_BROKER_LISTENER_NAME: INTERNAL
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+    networks:
+      - app_network
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.14.1
+    container_name: es01
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false   # tắt security cho dev/test
+      - ES_JAVA_OPTS=-Xms1g -Xmx1g
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    ports:
+      - "9200:9200"
+    volumes:
+      - es_data:/usr/share/elasticsearch/data
+    networks:
+      - app_network
+
+  kibana:
+    image: docker.elastic.co/kibana/kibana:8.14.1
+    container_name: kibana
+    environment:
+      - ELASTICSEARCH_HOSTS=http://es01:9200
+    ports:
+      - "5601:5601"
+    depends_on:
+      - elasticsearch
+    volumes:
+      - kibana_data:/usr/share/kibana/data
+    networks:
+      - app_network
+
 volumes:
   mysql_data:
+  es_data:
+  kibana_data:
+
+networks:
+  app_network:
+    driver: bridge

@@ -57,6 +57,7 @@ public class FileServiceImpl implements IFileService {
     public void softDeleteFileById(Long fileId) {
         // check permission
         metadataStorageService.softDeleteFile(fileId);
+        outboxService.addSoftDeleteMetadataEvent(List.of(fileId));
     }
 
     private File getFileByIdOrThrow(Long docId) {

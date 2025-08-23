@@ -1,3 +1,20 @@
+app:
+  kafka:
+    document-extracted-topic: document.extracted # when text extraction is done
+    metadata-update-topic: metadata.update # when metadata is updated
+    metadata-soft-delete-topic: metadata.soft.delete # when a document is soft-deleted
+    metadata-cleanup-topic: metadata.cleanup # when a document is deleted
+    metadata-delete-topic: metadata.delete # when metadata is deleted
+    metadata-create-topic: metadata.create # when metadata is created
+    category-delete-topic: category.delete # when a category is deleted
+    blob-delete-success-topic: blob.delete.success # when a blob is deleted successfully
+    blob-delete-fail-topic: blob.delete.fail # when a blob deletion fails
+    metadata-group: metadata-group
+    permission-group: permission-group
+    storage-group: storage-group
+    text-extractor-group: text-extractor-group
+    indexing-group: indexing-group
+
 eureka:
   client:
     service-url:
@@ -13,3 +30,19 @@ spring:
         jwt:
           issuer-uri: ${KEYCLOAK_ISSUER_URI:http://localhost:9000/realms/documentstorage}
           jwk-set-uri: ${KEYCLOAK_JWKS_URI:http://localhost:9000/realms/documentstorage/protocol/openid-connect/certs}
+  cloud:
+    azure:
+      storage:
+        blob:
+          container-name: luu-tru-tai-lieu
+      key-vault:
+        secret:
+          property-source-enabled: true
+          property-sources:
+            - endpoint: https://luutrutailieukeyvault.vault.azure.net/
+              retry:
+                mode: exponential
+                exponential:
+                  max-retries: 4
+                  base-delay: PT0.0801S
+                  max-delay: PT9S

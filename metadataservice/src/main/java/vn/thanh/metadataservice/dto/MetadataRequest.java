@@ -7,7 +7,6 @@ import lombok.Setter;
 @Setter
 public class MetadataRequest {
     private Long size;
-    private String type;
     private String name;
     private Long categoryId;
 }
