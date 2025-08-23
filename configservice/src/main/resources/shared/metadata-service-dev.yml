@@ -1,15 +1,6 @@
 server:
   port: 9080
 app:
-  kafka:
-    metadata-update-topic: metadata.update
-    metadata-cleanup-topic: metadata.cleanup
-    metadata-delete-topic: metadata.delete
-    metadata-create-topic: metadata.create
-    category-delete-topic: category.delete
-    blob-delete-success-topic: blob.delete.success
-    blob-delete-fail-topic: blob.delete.fail
-    metadata-group: metadata-group
   delete:
     document-retention-days: 7
 spring:
@@ -37,22 +28,6 @@ spring:
       ddl-auto: update
     generate-ddl: false
     database-platform: org.hibernate.dialect.MySQL8Dialect
-  cloud:
-    azure:
-      storage:
-        blob:
-          container-name: luu-tru-tai-lieu
-      key-vault:
-        secret:
-          property-source-enabled: true
-          property-sources:
-            - endpoint: https://luutrutailieukeyvault.vault.azure.net/
-              retry:
-                mode: exponential
-                exponential:
-                  max-retries: 4
-                  base-delay: PT0.0801S
-                  max-delay: PT9S
   kafka:
     producer:
       bootstrap-servers: localhost:9092,localhost:9093,localhost:9094

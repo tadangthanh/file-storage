@@ -9,6 +9,7 @@ import vn.thanh.indexingservice.entity.DocumentIndex;
 import vn.thanh.indexingservice.repository.DocumentIndexRepository;
 import vn.thanh.indexingservice.service.IDocumentIndexService;
 
+import java.util.List;
 import java.util.UUID;
 
 @Service
@@ -21,29 +22,28 @@ public class DocumentIndexServiceImpl implements IDocumentIndexService {
     public void listen(DocumentIndexMessage message) {
         log.info("Received file for indexing: documentId={}, blobName={}",
                 message.getDocumentId(), message.getBlobName());
+        // Convert DTO -> entity
+        DocumentIndex entity = new DocumentIndex();
+        entity.setId(UUID.randomUUID().toString());
+        entity.setDocumentId(message.getDocumentId());
+        entity.setVersion(message.getVersion());
+        entity.setChunkIndex(message.getChunkIndex());
+        entity.setText(message.getText());
+        entity.setOwnerId(message.getOwnerId());
+        entity.setVisibility(message.getVisibility());
+        entity.setCategoryId(message.getCategoryId());
+        entity.setAllowedUserIds(message.getAllowedUserIds());
+        entity.setAllowedGroupIds(message.getAllowedGroupIds());
+        entity.setCreatedAt(message.getCreatedAt());
+        entity.setDeleted(false);
+        // Insert vào Elasticsearch
+        repository.save(entity);
+        log.info("Indexed documentId={} successfully", message.getDocumentId());
+    }
 
-        try {
-            // Convert DTO -> entity
-            DocumentIndex entity = new DocumentIndex();
-            entity.setId(UUID.randomUUID().toString());
-            entity.setDocumentId(message.getDocumentId());
-            entity.setVersion(message.getVersion());
-            entity.setChunkIndex(message.getChunkIndex());
-            entity.setText(message.getText());
-            entity.setOwnerId(message.getOwnerId());
-            entity.setVisibility(message.getVisibility());
-            entity.setCategoryId(message.getCategoryId());
-            entity.setAllowedUserIds(message.getAllowedUserIds());
-            entity.setAllowedGroupIds(message.getAllowedGroupIds());
-            entity.setCreatedAt(message.getCreatedAt());
-
-            // Insert vào Elasticsearch
-            repository.save(entity);
-
-            log.info("Indexed documentId={} successfully", message.getDocumentId());
-
-        } catch (Exception e) {
-            log.error("Failed to index documentId={} due to {}", message.getDocumentId(), e.getMessage(), e);
-        }
+    @KafkaListener(topics = "${app.kafka.metadata-soft-delete-topic}", groupId = "${app.kafka.indexing-group}")
+    public void listenMetadataSoftDelete(List<Long> metadataIds) {
+        log.info("Received metadataIds for soft delete: {}", metadataIds);
+        repository.markDocumentsIndex(metadataIds,true);
     }
 }

@@ -26,9 +26,10 @@ public class OutboxServiceImpl implements IOutboxService {
     private String metadataDeleteTopic;
     @Value("${app.kafka.metadata-create-topic}")
     private String metadataCreateTopic;
-
     @Value("${app.kafka.category-delete-topic}")
     private String categoryDeleteTopic;
+    @Value("${app.kafka.metadata-soft-delete-topic}")
+    private String metadataSoftDeleteTopic;
 
 
     @Override
@@ -73,6 +74,23 @@ public class OutboxServiceImpl implements IOutboxService {
             String payload = objectMapper.writeValueAsString(categoryIds);
             OutboxEvent event = OutboxEvent.builder()
                     .topic(categoryDeleteTopic)
+                    .payload(payload)
+                    .status(OutboxEventStatus.PENDING)
+                    .retryCount(0)
+                    .build();
+            outboxEventRepository.save(event);
+        } catch (JsonProcessingException e) {
+            throw new JsonSerializeException("Lỗi serialize event");
+        }
+    }
+
+    @Override
+    public void addSoftDeleteMetadataEvent(List<Long> fileId) {
+        log.info("add metadata SOFT delete event to outbox");
+        try {
+            String payload = objectMapper.writeValueAsString(fileId);
+            OutboxEvent event = OutboxEvent.builder()
+                    .topic(metadataSoftDeleteTopic)
                     .payload(payload)
                     .status(OutboxEventStatus.PENDING)
                     .retryCount(0)

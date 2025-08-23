@@ -66,7 +66,7 @@ public class GlobalHandleException extends ResponseEntityExceptionHandler {
         return new ResponseEntity<>(errorResponse, HttpStatus.OK);
     }
 
-    @ExceptionHandler({UploadFailureException.class, PropertyReferenceException.class})
+    @ExceptionHandler({UploadFailureException.class, PropertyReferenceException.class,CustomIOException.class})
     public final ResponseEntity<ErrorResponse> handleBadRequestException(Exception ex, WebRequest request) {
         ErrorResponse errorResponse = new ErrorResponse();
         errorResponse.setTimestamp(LocalDateTime.now());

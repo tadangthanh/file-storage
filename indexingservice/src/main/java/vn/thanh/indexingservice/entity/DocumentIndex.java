@@ -30,6 +30,8 @@ public class DocumentIndex {
     private UUID ownerId;
 
     private String visibility; // private | public | shared
+    @Field(type = FieldType.Boolean, name = "isDeleted")
+    private boolean isDeleted = false;
 
     private Long categoryId;
 

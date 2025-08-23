@@ -5,5 +5,6 @@ import org.springframework.stereotype.Repository;
 import vn.thanh.indexingservice.entity.DocumentIndex;
 
 @Repository
-public interface DocumentIndexRepository extends ElasticsearchRepository<DocumentIndex, Long> {
+public interface DocumentIndexRepository
+        extends ElasticsearchRepository<DocumentIndex, String>, DocumentIndexRepositoryCustom {
 }

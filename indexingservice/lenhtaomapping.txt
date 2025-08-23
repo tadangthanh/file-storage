@@ -50,6 +50,9 @@ PUT /documents
       },
       "createdAt": {
         "type": "date"
+      },
+      "isDeleted": {
+        "type": "boolean"
       }
     }
   }
